@@ -1,0 +1,10 @@
+.DS_Store
+.swift-cache/
+.build/
+dist/
+
+server-admin/
+server-admin-home/
+
+*.swp
+*.tmp

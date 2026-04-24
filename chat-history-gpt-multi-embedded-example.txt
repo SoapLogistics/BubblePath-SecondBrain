@@ -1,0 +1,5 @@
+Here is one example JSON object that is not the BubblePath import payload:
+{"note":"ignore this block"}
+
+And here is the real BubblePath batch:
+{"app":"BubblePath","kind":"chat-history-batch","version":1,"chats":[{"bubbleTitle":"Identity and memory","excerpt":"Memory is part of continuity, not just storage.","bubbleType":"thought","tags":["identity","memory"]}]}

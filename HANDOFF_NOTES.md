@@ -1,0 +1,348 @@
+# BubblePath Handoff Notes
+
+Last updated: 2026-04-24
+
+## Built
+
+- Browser BubblePath prototype with:
+  - bubble capture
+  - draggable map
+  - links between bubbles
+  - local note conversation
+  - OpenAI-backed Ask GPT flow
+  - local disk vault save/load
+  - export/import
+  - backup list and restore
+  - visible backup policy details
+  - clear labels for regular backups vs pre-restore snapshots
+  - retention caps for regular backups and pre-restore backups
+- Native Mac BubblePath scaffold with:
+  - a local launchable app bundle path at `dist/BubblePath.app`
+  - a double-click launcher at `Launch BubblePath.command`
+  - packaging via `scripts/package-native-mac.sh`
+  - custom generated app icon at `Assets/BubblePath.icns`, copied into `dist/BubblePath.app`
+  - stable app-bundle path so a kept Dock icon can open the newest repackaged build
+  - Dock instructions in `MAC_QUICK_START.md`
+  - debounced autosave for edits with scene-phase flush when the app leaves the foreground
+  - pending autosave flush on macOS app termination notification
+  - visible Saving / Last Save state in the top panel
+  - selected-bubble delete from the keyboard or detail panel, with linked-bubble cleanup and autosave
+  - Escape now closes the selected bubble and returns focus to the canvas
+  - Command-N now creates a new bubble in the canvas center
+  - Command-S now forces an immediate vault save
+  - Shift-Command-D now duplicates the selected bubble with a small canvas offset
+  - the detail panel now has a visible duplicate button
+  - the detail-panel close button now uses the same autosaved selection-clearing path as Escape
+  - arrow keys now nudge the selected bubble on the canvas
+  - Command-[ and Command-] now step backward and forward through bubble selection
+  - Escape now also clears an active search when no bubble is selected
+  - the utility panel now has a visible New Bubble action
+  - the utility panel now shows a Clear Search action whenever search is active
+  - a centralized `BubbleStyle` system now drives canvas colors/icons, and the detail panel now includes a bubble type picker
+  - the main retrieval panel now has a Bubble Types lane for type-based filtering
+  - the importer now accepts a `chat-history-batch` envelope for distilled old chat material, including suggested tags and suggested bubble types
+  - added a ready-to-fill `chat-history-batch-template.json` and `CHAT_HISTORY_IMPORT_GUIDE.md` to make tomorrow's import prep practical
+  - the utility panel now has direct actions to open the import guide and reveal the template file
+  - the main retrieval panel now has a Source Conversations lane for imported old-chat material, and the detail panel can pivot by source conversation title or ID
+  - imported old-chat bubbles now also expose source conversation chips in recent-capture lanes and search-result cards
+  - chat-history batch imports now report whether the imported material came from one conversation or spans multiple conversations
+  - single-conversation chat-history imports now name that conversation directly in the import status
+  - empty chat-history and capture batches now report a clear import failure instead of a generic missing-JSON message
+  - malformed `chat-history-batch` and `capture-batch` JSON files now report a specific import failure instead of looking like missing BubblePath JSON
+  - mixed imports now append a more truthful outcome summary, including unsupported files plus empty or malformed batch files that were skipped
+  - envelope-level `sourceChatTitle` metadata now becomes a real searchable `Source conversation` line in imported chat-history bubbles
+  - Source Conversations retrieval now falls back to conversation IDs when imported chat batches do not include human-readable titles
+  - the workspace now includes a local `scripts/validate-chat-history-batch.swift` validator, and the Mac utility panel can reveal it beside the import guide and template
+  - the workspace now also includes a double-clickable `Validate Chat History.command` helper so chat-history batches can be validated without typing a Terminal command
+  - the validator now catches missing `bubbleTitle`/`excerpt` fields and invalid `bubbleType` values, and the workspace includes an invalid example batch for quick verification
+  - the Mac utility panel can now reveal the invalid chat-history example file beside the import guide, template, and validator
+  - single-file chat-history/capture import failures now include the bad filename in the app status
+  - single-file chat-history/capture import successes now also name the imported JSON file in the app status
+  - mixed import summaries now name the exact empty/malformed/invalid batch file when only one file in that category caused the issue
+  - mixed import summaries now also name the exact unsupported file when only one skipped file caused that part of the warning
+  - mixed import successes now also name the source JSON file when all imported captures came from a single file
+  - the workspace now includes `IMPORT_PREP_CHECKLIST.md`, and the Mac utility panel can open it as a single import-prep home base
+  - the workspace now includes `CHAT_HISTORY_DISTILL_PROMPT.txt`, and the Mac utility panel can reveal it as a paste-ready distillation prompt
+  - the Mac utility panel can now also copy the distill prompt directly to the clipboard
+  - the workspace now includes `chat-history-batch-minimal-example.json` as the smallest valid import example, and it passes the validator
+  - the Mac utility panel can now reveal the minimal valid chat-history example beside the template and bad example
+  - the Mac utility panel can now also copy the minimal valid chat-history example directly to the clipboard
+  - the Mac utility panel can now also copy the chat-history import template directly to the clipboard
+  - the chat-history validator now also catches bad `tags` arrays, invalid `sourceURL` values, and invalid `capturedAt` timestamps
+  - the validator command can now check multiple JSON files at once and reports a full pass/fail summary instead of stopping at the first bad file
+  - the validator command can now also accept a folder and validate every `.json` file inside it
+  - if a dropped folder has no JSON files, the validator now names that empty folder in the failure output
+  - folder validation in the command helper now also picks up uppercase `.JSON` files
+  - the validator command now deduplicates overlapping folder/file inputs so the same JSON file is not checked twice
+  - floating thought canvas
+  - draggable bubbles and connection lines
+  - bubble detail writing panel
+  - JSON vault load/save
+  - JSON import that now accepts either a full BubblePath vault or a standalone capture payload
+  - JSON import that now also accepts arrays of capture payloads for batch imports
+  - JSON import that now also accepts a wrapped `captures` envelope for batch imports
+  - JSON import can now accept multiple capture files in one picker action
+  - JSON files can now be dragged onto the Mac canvas and imported through the same capture/vault importer
+  - the canvas shows a subtle drop-target outline while files are dragged over it
+  - dropped text on the canvas now opens the Capture sheet
+  - dropped text reuses clipboard capture recognition, including webpage URL detection
+  - dropped webpage URLs now open the Capture sheet as webpage captures
+  - a single dropped webpage URL becomes a webpage capture, while multiple dropped webpage URLs become one grouped link capture draft
+  - dropped `.webloc`, `.inetloc`, and `.url` saved web-link files now open as webpage captures too
+  - dropped `.txt`, `.text`, `.md`, `.markdown`, `.rtf`, `.html`, `.htm`, and `.pdf` files now open the Capture sheet as readable text-file drafts
+  - dropped HTML files are converted to readable text before capture
+  - dropped PDF files are converted to readable text before capture
+  - dropped `.png`, `.jpg`, `.jpeg`, `.gif`, `.heic`, `.heif`, `.tif`, `.tiff`, `.bmp`, and `.webp` files now open the Capture sheet as lightweight searchable image-file drafts
+  - image-file capture currently keeps filename provenance plus editable notes, while binary image storage/preview remains future work
+  - image-file captures now use a first-class capture source type with automatic image/photo/visual/media tags
+  - dropped `.mp3`, `.m4a`, `.wav`, `.aiff`, `.aif`, `.aac`, `.flac`, and `.caf` files now open the Capture sheet as lightweight searchable audio-file drafts
+  - dropped `.mov`, `.mp4`, `.m4v`, `.avi`, `.webm`, and `.mkv` files now open the Capture sheet as lightweight searchable video-file drafts
+  - audio/video captures now use first-class capture source types with automatic media retrieval tags, while binary storage/playback remains future work
+  - related search now groups media terms like image, photo, audio, recording, video, and clip
+  - single dropped text, image, audio, and video files now prefill a local `file://` source URL for provenance
+  - dropped file capture still records provenance and notes only; it does not copy, move, delete, or manage the original files
+  - local-file provenance now shows as a clickable Local file cue in detail, recent-capture, and search-result surfaces
+  - the retrieval panel now includes a Source Folders lane for local single-file captures by parent folder
+  - local-file captures now offer Reveal in Finder from the detail panel
+  - Reveal in Finder now reports a clear status message if the remembered source file is missing
+  - captured sources now offer Copy Source URL from the detail panel
+  - non-file captured sources now offer Open Source Link from the detail panel
+  - dropped text-file origin notes now distinguish one file from multiple files
+  - text-file captures now surface clickable source-file chips in detail and search result cards
+  - the main retrieval panel now includes a Source Files lane for filename-based pivots, including dropped image, audio, and video filenames
+  - recent capture cards now expose clickable source-file chips too
+  - mixed text-file and JSON drops are rejected with clearer status text so capture and import flows stay separate
+  - mixed webpage-URL and JSON drops are rejected with clearer status text so imports stay understandable
+  - the drop overlay now says whether BubblePath will capture text, import text files, or import JSON
+  - the Capture sheet now warns on malformed source URLs and disables Save until the URL is valid or blank
+  - the Capture sheet now correctly saves source-free captures when the URL field is blank
+  - the Capture sheet now explains whether a draft came from clipboard, dropped text, or a dropped webpage link
+  - unsupported or unreadable files in a capture import batch are skipped while valid capture JSON still imports
+  - full-vault imports are kept separate from multi-file capture imports to avoid accidental vault replacement
+  - wrapped capture-envelope imports can now provide a default source app across the whole batch
+  - wrapped capture-envelope imports can now also provide a default target bubble across the whole batch
+  - wrapped capture-envelope imports can now also provide a shared source title and source URL across the whole batch
+  - that wrapped batch format now also carries lightweight identity/version fields (`app`, `kind`, `version`)
+  - clearer status text when a standalone capture payload is imported
+  - capture-import status that now says whether material was appended into an existing bubble or created as a new one
+  - capture-import summaries now count actual append/create outcomes, so stale target IDs become honest new-bubble imports
+  - empty capture-batch JSON imports now say no captures were found instead of silently doing nothing
+  - batch capture-import status can now name the shared source app when the whole batch came from one place
+  - batch capture-import status can now also name the shared target bubble when the whole batch appends into one bubble
+  - import/export plus manual capture intake
+  - clipboard-aware capture intake with clearer recognition feedback
+  - Keychain-backed API key storage
+  - Ask GPT flow with recent message history
+  - pending GPT state
+  - shared/private bubble memory scope
+  - visible vault target, backup counts, and last-saved time
+  - imported vault files remain the active save target
+  - one-click return to the shared project vault
+  - truthful sync-readiness panel: local-first now, CloudKit next
+  - search canvas with direct matches, related matches, nearby idea chips, exact quoted phrase mode, search reasons, snippets, and humane empty-search states
+  - lightweight tags with suggested tags and clickable tag pivots
+  - retrieval lanes for recent searches, recent captures, source types, source hosts, and source apps
+  - search-result cards that expose clickable tags, connected bubbles, source types, source hosts, and source apps
+  - detail-panel source pivots for source type, source host, and source app
+  - active-state highlighting across recent searches, nearby ideas, source lanes, and source pivots
+  - visible exact-phrase search badge/hints plus clearer shortcut hints in the utility panel
+  - keyboard shortcuts for search and capture (`Command-F`, `Command-Shift-N`, `Command-Shift-V`)
+  - keyboard shortcuts for save, import, and export (`Command-S`, `Command-O`, `Command-Shift-E`)
+  - manual capture now clears stale clipboard seed data before opening a fresh Capture sheet
+  - Return in the search field now opens the first direct result, or the first related result if no direct match exists
+  - the first result that Return will open is now visibly marked and highlighted more clearly in the search results list
+  - the search panel now also shows a clickable “Return opens …” hint for that current keyboard target
+  - that Return-target hint now also reflects when the targeted bubble is already selected
+  - search result cards now also show when a bubble is already the currently open one
+  - the search overview now says when the currently open bubble is already part of the direct or related results
+  - that search-overview current-bubble cue is now a chip-styled, clickable jump back into the bubble
+  - search section headers now also show a clickable “Current: …” chip when the open bubble belongs to that section
+  - recent-bubbles and recent-captures lanes now also show when a bubble is already the currently open one
+  - recent-bubbles and recent-captures headers now explicitly say when the current bubble is already in that lane
+  - those recent-lane headers now also name the current bubble when it is already in that lane
+  - that recent-lane current-bubble cue now has its own chip styling
+  - that recent-lane current-bubble chip is now clickable too
+  - when the current bubble appears in a recent lane, it now moves to the front of that lane
+  - that reordered current bubble now gets a small “Top of lane” cue
+- Native iPhone BubblePath scaffold with:
+  - floating bubble canvas
+  - local persistence
+  - writing sheet
+  - haptics
+  - shared capture payload model
+  - manual capture sheet mirroring the Mac intake flow
+
+## Verified
+
+- Browser app server responds at `http://127.0.0.1:5173`
+- Vault API health endpoint responds
+- Vault API backups endpoint responds
+- `app.js` syntax passes
+- `server.js` syntax passes
+- Native Mac scaffold builds with `swift build`
+- Native Mac app packages successfully with `./scripts/package-native-mac.sh`
+- Native Mac autosave/Dock launch path builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-autosave-dock-path`
+- Native Mac quit-autosave flush builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-quit-autosave-flush`
+- Native Mac visible autosave state builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-visible-autosave-state`
+- `dist/BubblePath.app/Contents/Info.plist` passes `plutil -lint`
+- `dist/BubblePath.app/Contents/Resources/BubblePath.icns` is present and referenced by `CFBundleIconFile`
+- `open dist/BubblePath.app` returned successfully
+- Native Mac image-file drop capture builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-image-file-drop-copy-fix`
+- Native Mac first-class image-file source type builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-image-capture-source`
+- Native Mac first-class audio/video source types build with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-audio-video-capture-source`
+- Native Mac media-drop copy polish builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-media-drop-copy`
+- Native Mac media retrieval polish builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-media-retrieval-polish`
+- Native Mac single-file provenance builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-single-file-provenance`
+- Native Mac local-file source cues build with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-local-file-source-cues`
+- Native Mac Source Folders lane builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-source-folder-lane`
+- Native Mac Reveal in Finder action builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-reveal-in-finder`
+- Native Mac Reveal in Finder missing-file guard builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-reveal-missing-file-guard`
+- Native Mac Copy Source URL action builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-copy-source-url`
+- Native Mac Open Source Link action builds with `swift build --product BubblePathMac --build-path /tmp/bpmac-verify-open-source-link`
+- Native Mac import-prep utility cluster now has a `Prep Set` action that reveals the checklist, guide, prompt, template, minimal example, bad example, and validator together in Finder
+- `BubbleChatImportEnvelope` now preserves a non-empty batch-level `sourceApp` for imported chat-history captures instead of always hardcoding `ChatGPT History Import`
+- `scripts/validate-chat-history-batch.swift` now validates top-level `sourceApp`, `sourceChatTitle`, `sourceChatID`, and `sourceURL`, and its success summary now includes the resolved source app
+- `scripts/validate-chat-history-batch.swift` now also validates top-level `app == BubblePath` and `version == 1`; verified with the template/minimal examples plus a generated wrong-version fixture
+- Added `scripts/wrap-chat-history-batch.swift`, verified against a root-array fixture; it can normalize a full batch, a root object with `chats`, a root chats array, or a single chat entry into a valid `chat-history-batch`
+- Added `Wrap Chat History.command`, verified against the root-array fixture; the Mac utility panel now exposes a `Wrapper` action that reveals it in Finder
+- `Wrap Chat History.command` now accepts folders, deduplicates targets, and picks up uppercase `.JSON` files; verified with a temp folder containing `MINIMAL.JSON` plus a root-array fixture
+- `Wrap Chat History.command` now skips existing `*-wrapped.json` outputs; verified with a temp folder containing both `array.json` and `array-wrapped.json`
+- Added `chat-history-single-entry-example.json` and verified that `Wrap Chat History.command` turns it into a valid single-item `chat-history-batch`
+- Native Mac `Prep Set` now reveals the wrapper command and the single-entry example too, and the utility panel now exposes a `Single Entry` example button
+- Native Mac utility panel now also exposes `Copy Single` for the single-entry chat-history example
+- `Wrap Chat History.command` now automatically validates the wrapped outputs too; verified against `chat-history-single-entry-example.json`
+- `Wrap Chat History.command` now distinguishes “only already-wrapped files found” from an actually empty folder; verified against a temp folder containing only `already-wrapped.json`
+- `Wrap Chat History.command` now reports a skip count for already-wrapped files during mixed runs; verified with a temp folder containing both `array.json` and `array-wrapped.json`
+- Native Mac `Prep Set` now also includes `chat-history-array-example.json`, and the utility panel exposes `Array` / `Copy Array` actions for that root-array wrapper fixture
+- Added `chat-history-object-example.json`; the Mac prep cluster now includes it with `Object` / `Copy Object` actions, and `Wrap Chat History.command` was verified against it end to end
+- `Wrap Chat History.command` now ends with `Wrapped N file(s) successfully.` after validation; verified against `chat-history-object-example.json`
+- `ContentView.handleImportedURLs` now accepts common loose chat-history shapes directly (`BubbleChatImportEnvelope`, root object with `chats`, root chats array, and single chat entry object); verified with `swift build --product BubblePathMac`
+- `ContentView.handleImportedURLs` now appends a status suffix when loose chat-history JSON was normalized directly during import; verified with `swift build --product BubblePathMac`
+- `ContentView.handleImportedURLs` now names the loose shape it normalized (`object-with-chats`, `root-array`, or `single-entry`) in direct-import status text; verified with `swift build --product BubblePathMac`
+- `ContentView.handleImportedURLs` now also names mixed loose-shape kinds in direct-import status text when more than one loose chat-history shape is normalized in the same import; verified with `swift build --product BubblePathMac`
+- `scripts/validate-chat-history-batch.swift` now recognizes loose `object-with-chats`, `root-array`, and `single-entry` chat-history shapes and tells users they can import directly into BubblePathMac or wrap first; re-verified against `chat-history-array-example.json`
+- Added `CHAT_HISTORY_SHAPE_GUIDE.md`; the Mac utility panel now exposes a `Shape Guide` action, and `Prep Set` includes it too. Verified with `swift build --product BubblePathMac`
+- Native Mac utility panel now also exposes `Copy Shape` for the chat-history shape guide. Verified with `swift build --product BubblePathMac`
+- Native Mac utility panel now also exposes `Copy Checklist` and `Copy Guide` for the import prep checklist and chat-history import guide. Verified with `swift build --product BubblePathMac`
+- Added `CHAT_HISTORY_COMMANDS.md`; the Mac utility panel now exposes `Commands` / `Copy Commands`, and `Prep Set` includes it too. Verified with `swift build --product BubblePathMac`
+- `CHAT_HISTORY_SHAPE_GUIDE.md` now points directly to `CHAT_HISTORY_COMMANDS.md`, tying the shape narrative to the terminal fallback commands
+- `CHAT_HISTORY_COMMANDS.md` now points back to `CHAT_HISTORY_SHAPE_GUIDE.md`, so the prep docs cross-link in both directions
+- `CHAT_HISTORY_COMMANDS.md` now includes a short ordered wrap/validate/import flow for terminal-side fallback use
+- `scripts/wrap-chat-history-batch.swift` now reports a human-friendly detected input shape before writing the normalized batch; verified against `chat-history-batch-template.json` and `chat-history-single-entry-example.json`
+- `CHAT_HISTORY_COMMANDS.md` now explicitly mentions that the wrapper reports the detected input shape before writing the normalized batch
+- `scripts/wrap-chat-history-batch.swift` now also reports the detected entry count before writing the normalized batch; verified against the full batch template and the single-entry example
+- `CHAT_HISTORY_COMMANDS.md` now also explicitly mentions that the wrapper reports the detected entry count as a quick sanity check
+- `CHAT_HISTORY_COMMANDS.md` now frames validation as validating a BubblePath batch, which better matches the current direct-import flow
+- `CHAT_HISTORY_SHAPE_GUIDE.md` now says more plainly that the fastest path is usually trying a direct BubblePathMac import first, with wrapping as the safer artifact-first fallback
+- `CHAT_HISTORY_IMPORT_GUIDE.md` now echoes the same direct-first guidance for common loose chat-history shapes
+- `IMPORT_PREP_CHECKLIST.md` now echoes the same direct-first guidance too, so the three prep docs stay aligned
+- Native Mac utility panel now exposes `Import Clipboard` with `Command-Shift-I`, so chat-history JSON can be imported straight from the clipboard without saving a file first. Verified with `swift build --product BubblePathMac`
+- Clipboard JSON import now validates empty/invalid clipboard content earlier and reports clipboard-specific failures instead of generic import failures. Verified with `swift build --product BubblePathMac`
+- Clipboard JSON import now strips outer ```json code fences automatically and reports that normalization in the status text. Verified with `swift build --product BubblePathMac`
+- Clipboard JSON import now also extracts one fenced JSON block from a larger GPT-style response and reports that extraction in the status text. Verified with `swift build --product BubblePathMac`
+- Clipboard JSON import now also pulls out one raw embedded JSON object or array from a larger GPT-style response without code fences and reports that extraction in the status text. Verified with `swift build --product BubblePathMac`
+- Native Mac app now exposes the same clipboard import path from `File > Import Clipboard JSON` through the app command menu, not only the utility panel. Verified with `swift build --product BubblePathMac`
+- The utility-panel help text, shortcut hint text, import guide, checklist, and commands guide now all mention the menu-path clipboard import option and the GPT-friendly clipboard behaviors
+- Native Mac `Import` now also accepts saved `.txt`, `.md`, and `.markdown` GPT response files, not just `.json`, using the same GPT-friendly extraction path. Verified with `swift build --product BubblePathMac`
+- Dropped saved GPT response files now follow that same GPT-friendly import path instead of falling back into plain text capture. Verified with `swift build --product BubblePathMac`
+- The import guide and checklist now explicitly say that dragging saved GPT response files onto the canvas is a supported import path too
+- Added `chat-history-gpt-fenced-example.md` and `chat-history-gpt-embedded-example.md` as concrete GPT-style response fixtures for the tolerant import paths
+- Native Mac utility panel and `Prep Set` now expose reveal/copy actions for those new GPT-style response fixtures. Verified with `swift build --product BubblePathMac`
+- The import guide, checklist, and shape guide now point to the new GPT-style response fixtures too
+- Added `chat-history-gpt-plain-text-example.txt` as a plain-text GPT response fixture, and the Mac utility panel/`Prep Set` now expose it too. Verified with `swift build --product BubblePathMac`
+- The Import sheet now explicitly surfaces `.md` and `.markdown` files too using filename-extension UTType fallbacks that work on this toolchain. Verified with `swift build --product BubblePathMac`
+- Saved `.md` and `.txt` GPT response imports now give a clearer next-step hint when no usable BubblePath JSON is found, pointing toward the GPT fenced/embedded examples or the shape guide. Verified with `swift build --product BubblePathMac`
+- `scripts/validate-chat-history-batch.swift` now reports whether a successful file was read as direct JSON, fenced GPT-style JSON, or embedded GPT-style JSON. Verified against the fenced markdown, embedded markdown, and plain-text GPT fixtures
+- `scripts/wrap-chat-history-batch.swift` now reports when it had to extract fenced or embedded GPT-style JSON before wrapping. Verified against the fenced markdown and plain-text GPT fixtures
+- Added `chat-history-gpt-multi-fence-example.md` as a concrete GPT response fixture for the multi-fence case, and the Mac utility panel/`Prep Set` now expose it too. Verified with `swift build --product BubblePathMac`
+- BubblePathMac, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now all prefer the fenced JSON block that actually looks like BubblePath data when a GPT-style response contains more than one fenced JSON block. Verified against `chat-history-gpt-multi-fence-example.md` and a wrapped output in `/tmp`
+- `CHAT_HISTORY_IMPORT_GUIDE.md`, `IMPORT_PREP_CHECKLIST.md`, `CHAT_HISTORY_SHAPE_GUIDE.md`, and `CHAT_HISTORY_COMMANDS.md` now all say explicitly that the app, validator, and wrapper share that same multi-fence GPT preference, so the written prep path matches the verified behavior
+- Added `chat-history-gpt-multi-embedded-example.txt` as a concrete GPT response fixture for the multi-embedded case, and the Mac utility panel/`Prep Set` now expose it too. Verified with `swift build --product BubblePathMac`
+- BubblePathMac, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now all prefer the embedded JSON chunk that actually looks like BubblePath data when a GPT-style response contains more than one raw embedded JSON object or array. Verified against `chat-history-gpt-multi-embedded-example.txt` and a wrapped output in `/tmp`
+- Added `chat-history-gpt-fence-plus-embedded-example.md` as a concrete GPT response fixture for the mixed fence-plus-embedded case, and the Mac utility panel/`Prep Set` now expose it too. Verified with `swift build --product BubblePathMac`
+- BubblePathMac, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now all choose the supported embedded BubblePath payload when a GPT-style response starts with an irrelevant fenced JSON block and only later includes the real embedded BubblePath batch. Verified against `chat-history-gpt-fence-plus-embedded-example.md` and a wrapped output in `/tmp`
+- Added `chat-history-gpt-embedded-plus-fence-example.md` as a concrete GPT response fixture for the mixed embedded-plus-fence case, and the Mac utility panel/`Prep Set` now expose it too. Verified with `swift build --product BubblePathMac`
+- BubblePathMac, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now all choose the supported fenced BubblePath payload when a GPT-style response starts with an irrelevant embedded JSON block and only later includes the real fenced BubblePath batch. Verified against `chat-history-gpt-embedded-plus-fence-example.md` and a wrapped output in `/tmp`
+- Clipboard import, saved-file import, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now all say explicitly when they skipped earlier unrelated JSON before choosing the BubblePath payload. Verified against both mixed fixtures and clean `swift build --product BubblePathMac`
+- The Import sheet now also accepts `.rtf`, `.html`, `.htm`, and `.pdf` GPT response files, and `normalizedImportJSONData(from:)` now extracts readable text from those richer formats before trying the tolerant BubblePath JSON extraction path
+- Added `chat-history-gpt-rtf-example.rtf` as a concrete saved-RTF GPT response fixture, and the Mac utility panel/`Prep Set` now expose it too
+- Added `chat-history-gpt-html-example.html` as a concrete saved-HTML GPT response fixture, and the Mac utility panel/`Prep Set` now expose it too
+- `scripts/validate-chat-history-batch.swift` and `scripts/wrap-chat-history-batch.swift` now extract readable text from `.rtf`, `.html`, `.htm`, and `.pdf` GPT response files too, using `textutil`/HTML-strip fallbacks where needed, and `Validate Chat History.command` / `Wrap Chat History.command` now accept those richer file types as inputs
+- The saved-RTF fixture was corrected so its JSON survives actual RTF text extraction, and both the validator and wrapper now pass cleanly against `chat-history-gpt-rtf-example.rtf`
+- `ContentView.readableText(from:)`, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now also extract readable text from `.doc` and `.docx` GPT response files through `textutil`, and the Import sheet / command helpers now accept those Word-style formats too
+- Added `chat-history-gpt-doc-example.doc` as a concrete saved-DOC GPT response fixture, generated from the plain-text example, and the Mac utility panel/`Prep Set` now expose it too
+- Added `chat-history-gpt-docx-example.docx` as a concrete saved-DOCX GPT response fixture, generated from the plain-text example, and the Mac utility panel/`Prep Set` now expose it too
+- `ContentView.readableText(from:)`, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now also extract readable text from `.odt` GPT response files through `textutil`, and the Import sheet / command helpers now accept that OpenDocument format too
+- Added `chat-history-gpt-odt-example.odt` as a concrete saved-ODT GPT response fixture, generated from the plain-text example, and the Mac utility panel/`Prep Set` now expose it too
+- Re-verified the saved-ODT path end to end: the validator passes against `chat-history-gpt-odt-example.odt`, the wrapper writes a clean normalized batch from it, and `swift build --product BubblePathMac` still completes cleanly afterward
+- The live Mac app Import help now names ODT alongside DOC, DOCX, and the other richer saved-file formats
+- `looksLikeFailedGPTResponseAttempt(at:)` now falls back to BubblePath's readable-text extraction path instead of only raw UTF-8 reads, so dropped richer saved GPT response files like ODT get the same early failed-import guidance as plain text and markdown
+- `friendlyImportSourceLabel(for:)` now gives more human-readable labels for saved GPT artifacts, distinguishing saved text, document, webpage, and PDF response files instead of always echoing a bare filename
+- Single-file GPT import failures now reuse `friendlyImportSourceLabel(for:)` too, so those error messages match the richer saved-artifact labeling used elsewhere in import feedback
+- `friendlyImportSourceLabel(for:)` now also distinguishes DOC, DOCX, ODT, and RTF response files by name instead of flattening them into one generic saved-document label
+- `friendlyImportSourceLabel(for:)` now also distinguishes saved HTML and saved webarchive response files by name instead of flattening them into one generic saved-webpage label
+- `friendlyImportSourceLabel(for:)` now also distinguishes saved text and saved markdown response files by name instead of flattening them into one generic saved-text label
+- `friendlyImportSourceLabel(for:)` now also gives saved JSON files a more human-readable label instead of dropping straight to a bare filename whenever the source is not clipboard JSON
+- `friendlyImportSourceLabel(for:)` now also distinguishes saved chat-history, capture, and BubblePath vault JSON files by filename instead of flattening all saved JSON into one generic label
+- `friendlyImportSourceLabel(for:)` now uses a clearer generic “saved import JSON file” label whenever a saved JSON file does not match one of the more specific chat-history, capture, or BubblePath vault categories
+- `handleImportedURLs(_:)` now also gives single-file saved JSON failures a file-specific message instead of dropping straight to the fully generic “no BubblePath JSON found” path used for larger mixed failures
+- `handleImportedURLs(_:)` now also gives single-file unsupported import failures a more direct file-specific message instead of dropping straight to the fully generic mixed-failure wording
+- Added `chat-history-gpt-pdf-example.pdf` as a concrete saved-PDF GPT response fixture, and the Mac utility panel/`Prep Set` now expose it too
+- `copySupportTextFile` now falls back to BubblePath's readable-text extraction path, so the utility panel can copy richer saved-response examples like DOC, DOCX, ODT, RTF, HTML, PDF, and webarchive instead of assuming raw UTF-8 text
+- The live Mac app wording now explicitly says saved GPT/webpage/document files, and the Import button help now names DOC and DOCX alongside the other richer saved-file formats
+- `ContentView.readableText(from:)`, `scripts/validate-chat-history-batch.swift`, and `scripts/wrap-chat-history-batch.swift` now also extract readable text from `.webarchive` files by pulling the main archived HTML resource and reusing the HTML text path
+- Added `chat-history-gpt-webarchive-example.webarchive` as a concrete saved-webarchive GPT response fixture, and the Mac utility panel/`Prep Set` now expose it too
+- Re-verified the saved-webarchive path end to end: the validator passes against `chat-history-gpt-webarchive-example.webarchive`, the wrapper writes a clean normalized batch from it, and `swift build --product BubblePathMac` still completes cleanly afterward
+- The Import sheet now also explicitly surfaces `.webarchive` through a filename-extension UTType fallback, so the saved-webpage route is visible in the picker instead of only working once a file is already dropped or routed into the importer
+- Ubuntu BubblePath helper box is now live at `millerm@192.168.4.78` (`dell`) with Docker, Docker Compose, Samba, Avahi, UFW, `tmux`, `ripgrep`, `fd-find`, `btop`, `neovim`, Python build tooling, and storage-health tooling installed
+- `millerm` is now in the `docker` group on the Ubuntu helper box
+- A persistent 700G LVM-backed shared volume now mounts at `/srv/storage/shared`, with BubblePath-oriented folders under both `/srv/storage/shared/` and `/srv/bubblepath/`
+- Finder-ready network storage is now available at `smb://192.168.4.78/Shared`
+- The Ubuntu helper box now has a local `/srv/bubblepath/bin/bubblepath-server-status` helper for quick health checks
+- The Ubuntu helper box now also has `bubblepath-paths`, `bubblepath-incoming`, `bubblepath-process-incoming`, and `bubblepath-backup` helper commands to make phone/Termius use less raw
+- The Ubuntu helper box now also has `bubblepath-phone-help` and `bubblepath-watch-incoming`, and `mosh` is installed for future phone-friendly shell use
+- The Ubuntu helper box now also has `bubblepath-latest-batch` with a matching `bp-latest` alias, and `fzf`, `ncdu`, and `bat` are installed for a friendlier admin shell
+- The Ubuntu helper box now also has `bubblepath-session-start` with a matching `bp-start` alias, so a phone/server session can begin with one BubblePath-oriented snapshot
+- `bubblepath-session-start` now also includes the intake snapshot and recent backup summary, so that first phone/server view is more complete
+- The Ubuntu welcome note and `bubblepath-session-start` snapshot now reflect the fuller command set and include shared-storage visibility too, so the server-home view is more coherent
+- The Ubuntu helper box now also has `bubblepath-batches` with a matching `bp-batches` alias, so recent processed incoming batches are easy to view from a phone shell
+- The Ubuntu helper box now also has `bubblepath-batch-files` with a matching `bp-files` alias, so the contents of the latest processed batch are easy to inspect from a phone shell
+- The Ubuntu helper box now also has `bubblepath-intake-status` with a matching `bp-intake` alias, so a phone shell can see waiting files, processed-batch count, and the latest batch summary in one compact view
+- The Ubuntu helper box now also has `bubblepath-backups` with a matching `bp-backups` alias, so recent BubblePath server backup archives are easy to inspect from a phone shell
+- The Ubuntu helper box now also has `bubblepath-share-status` with a matching `bp-share-status` alias, so a phone shell can see the key shared BubblePath folders and overall shared-disk usage in one compact view
+- The Ubuntu firewall now also allows the standard `mosh` UDP range (`60000:61000`), so the server-side `mosh` install is actually usable later
+- The Ubuntu helper box now also has `bubblepath-tree` with a matching `bp-tree` alias, so a phone shell can inspect the BubblePath server/share folder layout without manual directory hopping
+- The Ubuntu helper box now also has a BubblePath-flavored shell home: `~/.bash_aliases` with `bp-*` shortcuts, `~/.tmux.conf`, and `~/.config/bubblepath/WELCOME.txt`
+- A dedicated local server admin keypair now lives in `server-admin/bubblepath-server-key` and `server-admin/bubblepath-server-key.pub`, and the public key has been appended to the server's `~/.ssh/authorized_keys`
+- Tailscale is installed and active on the Ubuntu helper box as `dell-bubblepath` at `100.120.102.102`
+- Added `SERVER_QUICK_START.md` with the Termius host settings, key server paths, and the current BubblePath server command set
+- The Mac utility panel now also exposes `Server Guide` / `Copy Server` actions for `SERVER_QUICK_START.md`, and `Prep Set` now includes that server guide too
+- Added `PHONE_ACCESS_PLAN.md` so the phone-access goal stays concrete, and the Mac utility panel now exposes `Phone Plan` / `Copy Phone` actions for it too
+- Added `TERMIUS_QUICK_CONNECT.md` so the phone-server reconnect details are one click away, and the Mac utility panel now exposes `Termius` / `Copy Termius` actions for it too
+- Added `SERVER_COMMANDS.md` so the server-home command set is one click away too, and the Mac utility panel now exposes `Server Cmds` / `Copy Cmds` actions for it
+- `Prep Set` now also carries `SERVER_COMMANDS.md`, so the server guide, phone plan, Termius guide, and server-command cheat sheet stay bundled together in one reveal action
+- Native iPhone scaffold builds with `swift build`
+
+## Important Files
+
+- `index.html`
+- `styles.css`
+- `app.js`
+- `server.js`
+- `bubblepath-vault/bubblepath-data.json`
+- `bubblepath-vault/backups/`
+- `PROJECT_STATUS.md`
+- `NOON_CHECKPOINT.md`
+- `NATIVE_MAC_APP.md`
+- `NativeMac/BubblePathMac/`
+
+## Remaining High-Value Work
+
+1. Mac Safari/share-extension style capture for webpages and selected text
+2. iPhone Share Sheet ingestion using the shared capture payload model
+3. CloudKit/iCloud sync in the native app
+4. Decide long-term vault ownership between browser prototype and native app
+5. Optional age-based backup pruning in addition to count limits
+6. Better native GPT UX, such as streaming
+7. Native app launch/run polish beyond `swift build`
+8. Future scene/mood layer planning so immersive themes like the undersea reef world can sit behind the bubbles without overpowering the thought space

@@ -1,0 +1,13 @@
+{
+  "bubbleTitle": "Single-entry example",
+  "excerpt": "This is a single distilled chat-history entry that still needs to be wrapped into a BubblePath batch.",
+  "tags": [
+    "philosophy",
+    "import-test"
+  ],
+  "bubbleType": "thought",
+  "sourceChatTitle": "Single object import example",
+  "sourceChatID": "chat-single-001",
+  "sourceURL": "https://chatgpt.com/c/chat-single-001",
+  "capturedAt": "2026-04-24T13:00:00Z"
+}

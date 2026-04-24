@@ -1,0 +1,12 @@
+{
+  "app": "BubblePath",
+  "kind": "chat-history-batch",
+  "version": 2,
+  "chats": [
+    {
+      "bubbleTitle": "Minimal valid bubble",
+      "excerpt": "This is the smallest valid BubblePath chat-history import entry.",
+      "bubbleType": "thought"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+This is a GPT-style plain-text response with a short explanation before the BubblePath JSON.
+
+{
+  "app": "BubblePath",
+  "kind": "chat-history-batch",
+  "version": 1,
+  "sourceApp": "ChatGPT Distillation",
+  "sourceChatTitle": "Plain text JSON example",
+  "chats": [
+    {
+      "bubbleTitle": "Plain text response example",
+      "excerpt": "This example shows a GPT-style plain-text response where the useful BubblePath JSON appears after a short explanation.",
+      "bubbleType": "thought",
+      "tags": [
+        "import-test",
+        "plain-text"
+      ],
+      "sourceChatTitle": "Plain text JSON example",
+      "sourceChatID": "chat-plain-001"
+    }
+  ]
+}

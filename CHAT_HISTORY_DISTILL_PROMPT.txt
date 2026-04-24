@@ -1,0 +1,56 @@
+I am moving my old philosophy-related ChatGPT conversations into an app called BubblePath.
+
+Please go through the chat material I give you and extract only the parts that meaningfully belong in my philosophy system, writing system, theology reflections, worldview, ethics, metaphysics, meaning, identity, truth, memory, and related idea development.
+
+Do NOT return one big essay.
+Do NOT return one big summary.
+Do NOT return conversational filler.
+
+Instead, return a JSON object in exactly this format:
+
+{
+  "app": "BubblePath",
+  "kind": "chat-history-batch",
+  "version": 1,
+  "sourceApp": "ChatGPT History Import",
+  "sourceChatTitle": "optional overall conversation title",
+  "sourceChatID": "optional overall conversation id",
+  "sourceURL": "optional overall source url",
+  "chats": [
+    {
+      "bubbleTitle": "short useful title",
+      "excerpt": "the distilled content for one bubble",
+      "tags": ["philosophy", "theology", "memory"],
+      "bubbleType": "thought",
+      "sourceChatTitle": "optional original chat title",
+      "sourceChatID": "optional original id",
+      "sourceURL": "optional original url",
+      "capturedAt": "2026-04-24T12:00:00Z"
+    }
+  ]
+}
+
+Rules:
+- Each item in "chats" should become one useful BubblePath bubble.
+- Make each bubble small enough to be searchable and reusable.
+- Split big ideas into multiple bubbles.
+- Preserve exact key concepts, distinctions, principles, arguments, tensions, and recurring themes.
+- Prefer 1 idea per bubble.
+- Keep titles short and strong.
+- Use tags generously but meaningfully.
+- Use only these bubbleType values:
+  - "thought"
+  - "question"
+  - "decision"
+  - "seed"
+  - "file"
+  - "chat"
+- Use:
+  - "seed" for foundational truths or core principles
+  - "thought" for normal ideas
+  - "question" for open problems
+  - "decision" for settled conclusions
+  - "file" for reference-style material
+  - "chat" for conversational reflections that should stay chat-like
+- Do not include empty fields unless useful.
+- Output valid JSON only.

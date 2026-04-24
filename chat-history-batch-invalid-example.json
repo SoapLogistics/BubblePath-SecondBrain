@@ -1,0 +1,18 @@
+{
+  "app": "BubblePath",
+  "kind": "chat-history-batch",
+  "version": 1,
+  "sourceApp": "ChatGPT History Import",
+  "chats": [
+    {
+      "bubbleTitle": "",
+      "excerpt": "This entry is intentionally invalid because the bubbleTitle is blank.",
+      "bubbleType": "seed"
+    },
+    {
+      "bubbleTitle": "Invalid bubble type example",
+      "excerpt": "This entry is intentionally invalid because the bubbleType is not allowed.",
+      "bubbleType": "essay"
+    }
+  ]
+}

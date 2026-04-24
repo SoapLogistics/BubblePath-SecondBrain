@@ -1,0 +1,11 @@
+[
+  {
+    "bubbleTitle": "Array-only example",
+    "excerpt": "This came in as a root chats array instead of a full batch.",
+    "bubbleType": "thought",
+    "tags": [
+      "philosophy",
+      "import-test"
+    ]
+  }
+]

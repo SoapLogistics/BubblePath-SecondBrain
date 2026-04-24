@@ -1,0 +1,55 @@
+{
+  "app": "BubblePath",
+  "kind": "chat-history-batch",
+  "version": 1,
+  "sourceApp": "ChatGPT History Import",
+  "sourceChatTitle": "Philosophy archive batch",
+  "sourceChatID": "optional-chat-batch-id",
+  "sourceURL": "https://chatgpt.com/",
+  "chats": [
+    {
+      "bubbleTitle": "Truth is discovered through lived testing",
+      "excerpt": "A core philosophical thread is that ideas become trustworthy through lived testing, not just abstract consistency. The user returns to this often as a criterion for truth, discernment, and moral seriousness.",
+      "tags": [
+        "philosophy",
+        "truth",
+        "epistemology",
+        "lived-experience"
+      ],
+      "bubbleType": "seed",
+      "sourceChatTitle": "Philosophy notes with ChatGPT",
+      "sourceChatID": "chat-001",
+      "sourceURL": "https://chatgpt.com/c/chat-001",
+      "capturedAt": "2026-04-24T12:00:00Z"
+    },
+    {
+      "bubbleTitle": "Question of memory and identity",
+      "excerpt": "One recurring open problem is whether memory continuity is enough for personal identity, or whether identity has a deeper spiritual or metaphysical center beyond remembered experience.",
+      "tags": [
+        "philosophy",
+        "identity",
+        "memory",
+        "metaphysics"
+      ],
+      "bubbleType": "question",
+      "sourceChatTitle": "Identity conversation",
+      "sourceChatID": "chat-002",
+      "sourceURL": "https://chatgpt.com/c/chat-002",
+      "capturedAt": "2026-04-24T12:05:00Z"
+    },
+    {
+      "bubbleTitle": "Reference on theological anthropology",
+      "excerpt": "Reference material connecting personhood, soul, embodiment, and moral agency. Keep this as a reusable source bubble instead of a settled conclusion.",
+      "tags": [
+        "theology",
+        "anthropology",
+        "reference"
+      ],
+      "bubbleType": "file",
+      "sourceChatTitle": "Theology source review",
+      "sourceChatID": "chat-003",
+      "sourceURL": "https://chatgpt.com/c/chat-003",
+      "capturedAt": "2026-04-24T12:10:00Z"
+    }
+  ]
+}

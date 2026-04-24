@@ -1,0 +1,17 @@
+{
+  "sourceApp": "GPT Distillation Draft",
+  "sourceChatTitle": "Root object example",
+  "chats": [
+    {
+      "bubbleTitle": "Object-with-chats example",
+      "excerpt": "This is a root object with a chats array, but it still needs to be wrapped into the full BubblePath envelope.",
+      "bubbleType": "thought",
+      "tags": [
+        "philosophy",
+        "import-test"
+      ],
+      "sourceChatTitle": "Root object example chat",
+      "sourceChatID": "chat-object-001"
+    }
+  ]
+}

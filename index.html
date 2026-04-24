@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BubblePath</title>
+    <link rel="stylesheet" href="styles.css?v=20260420-1816">
+  </head>
+  <body>
+    <div id="save-toast" class="save-toast hidden" role="status" aria-live="polite">Saved to this Mac</div>
+    <main class="shell">
+      <section class="capture-panel" aria-label="Capture thought">
+        <div class="brand-row">
+          <div class="mark" aria-hidden="true">BP</div>
+          <div>
+            <h1>BubblePath</h1>
+            <p>Let the thought arrive. Shape it when it is ready.</p>
+          </div>
+        </div>
+
+        <div class="vault-banner">
+          <div>
+            <strong>Local Vault</strong>
+            <span id="vault-banner-text">Checking disk backup...</span>
+          </div>
+          <button type="button" id="quick-save-vault">Save</button>
+        </div>
+
+        <form id="bubble-form" class="capture-form">
+          <label for="bubble-input">New bubble</label>
+          <textarea id="bubble-input" rows="5" placeholder="What is alive in your mind right now?"></textarea>
+          <div class="form-actions">
+            <select id="bubble-type" aria-label="Bubble type">
+              <option value="thought">Thought</option>
+              <option value="question">Question</option>
+              <option value="decision">Decision</option>
+              <option value="seed">Seed</option>
+            </select>
+            <button type="submit">Capture</button>
+          </div>
+        </form>
+
+        <div class="quick-prompts">
+          <button type="button" data-prompt="What am I avoiding saying clearly?">Clarify</button>
+          <button type="button" data-prompt="What does this connect to from earlier?">Connect</button>
+          <button type="button" data-prompt="What could this become if I gave it time?">Compound</button>
+        </div>
+
+        <div class="bubble-list-wrap">
+          <div class="section-title">
+            <h2>Bubbles</h2>
+            <span id="bubble-count">0</span>
+          </div>
+          <div id="bubble-list" class="bubble-list" role="list"></div>
+        </div>
+
+        <div class="storage-row">
+          <button type="button" id="save-vault">Save Vault</button>
+          <button type="button" id="download-vault">Download Vault</button>
+          <button type="button" id="export-json">Export</button>
+          <button type="button" id="import-json">Import</button>
+          <button type="button" id="clear-all">Clear</button>
+        </div>
+        <div class="vault-card">
+          <strong id="vault-mode">Browser fallback</strong>
+          <span id="vault-detail">Waiting for the local vault server.</span>
+        </div>
+        <details class="backup-drawer">
+          <summary>Recent Backups</summary>
+          <div id="backup-summary" class="backup-summary">Checking backup policy...</div>
+          <div id="backup-list" class="backup-list"></div>
+        </details>
+        <input id="import-file" class="hidden" type="file" accept="application/json,.json">
+
+        <div class="ai-settings">
+          <div class="section-title">
+            <h2>Your GPT</h2>
+            <span id="vault-status">Local</span>
+          </div>
+          <label for="api-key">OpenAI API key</label>
+          <input id="api-key" type="password" autocomplete="off" placeholder="sk-...">
+          <label for="model-name">Model</label>
+          <input id="model-name" type="text" value="gpt-5.2">
+          <label for="guide-prompt">How your GPT should feel</label>
+          <textarea id="guide-prompt" rows="5"></textarea>
+          <button type="button" id="save-settings">Save GPT Settings</button>
+          <p class="settings-note">Bubbles save to a local vault on this Mac when the vault server is running. The native Mac/iPhone app should use iCloud for bubbles and Keychain for your API key.</p>
+        </div>
+      </section>
+
+      <section class="path-panel" aria-label="Bubble path map">
+        <div class="map-toolbar">
+          <div>
+            <h2>Path</h2>
+            <p id="path-subtitle">Every captured thought becomes part of the map.</p>
+          </div>
+          <button type="button" id="auto-arrange">Arrange</button>
+        </div>
+        <div id="path-map" class="path-map" tabindex="0" aria-label="Interactive bubble map">
+          <svg id="link-layer" class="link-layer" aria-hidden="true"></svg>
+          <div id="empty-state" class="empty-state">
+            <strong>Start with one honest sentence.</strong>
+            <span>The path will form around it.</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="detail-panel" aria-label="Selected bubble">
+        <div id="detail-empty" class="detail-empty">
+          <span class="detail-symbol">O</span>
+          <h2>No bubble selected</h2>
+          <p>Capture a thought, then open it here to expand, link, and turn it into something useful.</p>
+        </div>
+
+        <div id="detail-view" class="detail-view hidden">
+          <div class="detail-heading">
+            <span id="detail-type" class="type-pill">Thought</span>
+            <button type="button" id="delete-bubble" aria-label="Delete selected bubble">Delete</button>
+          </div>
+          <textarea id="detail-content" class="detail-content" aria-label="Bubble content"></textarea>
+          <div class="meta-line" id="detail-meta"></div>
+
+          <div class="link-box">
+            <label for="link-select">Connect to another bubble</label>
+            <div class="link-actions">
+              <select id="link-select"></select>
+              <button type="button" id="link-bubble">Link</button>
+            </div>
+            <div id="linked-list" class="linked-list"></div>
+          </div>
+
+          <div class="conversation">
+            <div class="section-title">
+              <h2>Conversation</h2>
+              <span id="message-count">0</span>
+            </div>
+            <div id="messages" class="messages"></div>
+            <form id="message-form" class="message-form">
+              <input id="message-input" type="text" placeholder="Expand this bubble...">
+              <button type="submit">Add</button>
+              <button type="button" id="ask-gpt">Ask GPT</button>
+            </form>
+          </div>
+
+          <div class="build-box">
+            <h2>Build From This</h2>
+            <button type="button" data-build="summary">Summary</button>
+            <button type="button" data-build="next">Next Step</button>
+            <button type="button" data-build="question">Better Question</button>
+            <div id="build-output" class="build-output"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <script src="app.js?v=20260420-1816"></script>
+  </body>
+</html>

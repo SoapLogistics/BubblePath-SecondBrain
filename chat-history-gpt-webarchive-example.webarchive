@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>WebMainResource</key>
+  <dict>
+    <key>WebResourceData</key>
+    <data>
+    PCFkb2N0eXBlIGh0bWw+PGh0bWw+PGJvZHk+PHA+U2F2ZWQgd2ViIGFyY2hpdmUgR1BUIHJl
+    c3BvbnNlLjwvcD48cHJlPjxjb2RlPnsiYXBwIjoiQnViYmxlUGF0aCIsImtpbmQiOiJjaGF0
+    LWhpc3RvcnktYmF0Y2giLCJ2ZXJzaW9uIjoxLCJjaGF0cyI6W3siYnViYmxlVGl0bGUiOiJB
+    cmNoaXZlIGFuZCByZWNhbGwiLCJleGNlcnB0IjoiQSBzYXZlZCBwYWdlIGNhbiBzdGlsbCBi
+    ZWNvbWUgYSBsaXZlIHRob3VnaHQgd2hlbiBpdHMgc3RydWN0dXJlIHN1cnZpdmVzIGNhcHR1
+    cmUuIiwiYnViYmxlVHlwZSI6InRob3VnaHQiLCJ0YWdzIjpbImFyY2hpdmUiLCJyZWNhbGwi
+    XX1dfTwvY29kZT48L3ByZT48L2JvZHk+PC9odG1sPg==
+    </data>
+    <key>WebResourceFrameName</key>
+    <string></string>
+    <key>WebResourceMIMEType</key>
+    <string>text/html</string>
+    <key>WebResourceTextEncodingName</key>
+    <string>UTF-8</string>
+    <key>WebResourceURL</key>
+    <string>https://example.com/chat-history-gpt-webarchive-example</string>
+  </dict>
+</dict>
+</plist>

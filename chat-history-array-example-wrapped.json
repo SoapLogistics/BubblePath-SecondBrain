@@ -1,0 +1,16 @@
+{
+  "app" : "BubblePath",
+  "chats" : [
+    {
+      "bubbleTitle" : "Array-only example",
+      "bubbleType" : "thought",
+      "excerpt" : "This came in as a root chats array instead of a full batch.",
+      "tags" : [
+        "philosophy",
+        "import-test"
+      ]
+    }
+  ],
+  "kind" : "chat-history-batch",
+  "version" : 1
+}

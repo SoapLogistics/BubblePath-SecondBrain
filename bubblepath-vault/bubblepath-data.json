@@ -1,0 +1,82 @@
+{
+  "app" : "BubblePath",
+  "bubbles" : [
+    {
+      "content" : "BubblePath is a place where conversation becomes creation.",
+      "createdAt" : "2026-04-20T22:11:58.171Z",
+      "id" : "17D45421-5661-419A-A57B-AF0D5C417FDF",
+      "links" : [
+        "EF0E5486-58AB-4295-9794-667356762DAE"
+      ],
+      "memoryScope" : "shared",
+      "messages" : [
+        {
+          "createdAt" : "2026-04-20T22:11:58.171Z",
+          "id" : "A9B58780-22E7-4AE9-B18D-B1BC2C50FA71",
+          "role" : "note",
+          "text" : "The first version should make capture feel immediate and structure feel optional."
+        },
+        {
+          "createdAt" : "2026-04-21T16:00:33.462Z",
+          "id" : "0647A082-2369-4104-B230-AA1A9F08EF87",
+          "role" : "user",
+          "text" : "hey are you my gpt the one i talk to that we discuss the eternal now and all that"
+        },
+        {
+          "createdAt" : "2026-04-21T16:00:34.960Z",
+          "id" : "7B916167-80DD-4EA1-B0AD-AE8E5D1879C3",
+          "role" : "assistant",
+          "text" : "OpenAI request failed: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https:\/\/platform.openai.com\/docs\/guides\/error-codes\/api-errors."
+        },
+        {
+          "createdAt" : "2026-04-21T16:07:17.224Z",
+          "id" : "B443CF35-D1E4-41F3-8EB3-7FB943E78E54",
+          "role" : "note",
+          "text" : "hey are you my gpt the one i talk to that we discuss the eternal now and all that"
+        },
+        {
+          "createdAt" : "2026-04-21T16:07:36.514Z",
+          "id" : "BBB13C52-14DD-425C-9DB3-C74B69695D0D",
+          "role" : "user",
+          "text" : "hey are you my gpt the one i talk to that we discuss the eternal now and all that"
+        },
+        {
+          "createdAt" : "2026-04-21T16:07:37.564Z",
+          "id" : "96F60487-164C-48D8-9146-E6775C1E7116",
+          "role" : "assistant",
+          "text" : "OpenAI request failed: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https:\/\/platform.openai.com\/docs\/guides\/error-codes\/api-errors."
+        }
+      ],
+      "tags" : [
+
+      ],
+      "title" : "BubblePath is a place where conversation becomes creation.",
+      "type" : "seed",
+      "updatedAt" : "2026-04-24T16:01:36.264Z",
+      "x" : 46.0680119983348,
+      "y" : 17.96125228316101
+    },
+    {
+      "content" : "Small thoughts can compound into larger insights over time.",
+      "createdAt" : "2026-04-20T22:11:58.171Z",
+      "id" : "EF0E5486-58AB-4295-9794-667356762DAE",
+      "links" : [
+        "17D45421-5661-419A-A57B-AF0D5C417FDF"
+      ],
+      "memoryScope" : "shared",
+      "messages" : [
+
+      ],
+      "tags" : [
+
+      ],
+      "title" : "Small thoughts can compound into larger insights over time.",
+      "type" : "thought",
+      "x" : 58,
+      "y" : 58
+    }
+  ],
+  "savedAt" : "2026-04-24T23:06:44.698Z",
+  "selectedId" : "17D45421-5661-419A-A57B-AF0D5C417FDF",
+  "version" : 1
+}

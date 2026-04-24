@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "selectedId": "17d45421-5661-419a-a57b-af0d5c417fdf",
+  "bubbles": [
+    {
+      "id": "17d45421-5661-419a-a57b-af0d5c417fdf",
+      "type": "seed",
+      "content": "BubblePath is a place where conversation becomes creation.",
+      "createdAt": "2026-04-20T22:11:58.171Z",
+      "x": 42,
+      "y": 40,
+      "links": [
+        "ef0e5486-58ab-4295-9794-667356762dae"
+      ],
+      "messages": [
+        {
+          "id": "a9b58780-22e7-4ae9-b18d-b1bc2c50fa71",
+          "role": "note",
+          "text": "The first version should make capture feel immediate and structure feel optional.",
+          "createdAt": "2026-04-20T22:11:58.171Z"
+        }
+      ]
+    },
+    {
+      "id": "ef0e5486-58ab-4295-9794-667356762dae",
+      "type": "thought",
+      "content": "Small thoughts can compound into larger insights over time.",
+      "createdAt": "2026-04-20T22:11:58.171Z",
+      "x": 58,
+      "y": 58,
+      "links": [
+        "17d45421-5661-419a-a57b-af0d5c417fdf"
+      ],
+      "messages": []
+    }
+  ],
+  "app": "BubblePath",
+  "savedAt": "2026-04-20T22:16:14.548Z"
+}
