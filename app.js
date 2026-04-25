@@ -124,6 +124,13 @@ const elements = {
   serverSubtitle: document.querySelector("#server-subtitle"),
   serverCount: document.querySelector("#server-count"),
   serverContext: document.querySelector("#server-context"),
+  serverDocSubtitle: document.querySelector("#server-docs-subtitle"),
+  serverDocCount: document.querySelector("#server-doc-count"),
+  serverDocStatus: document.querySelector("#server-doc-status"),
+  serverFileInput: document.querySelector("#server-file-input"),
+  serverUrlInput: document.querySelector("#server-url-input"),
+  serverUrlIngest: document.querySelector("#server-url-ingest"),
+  serverDocuments: document.querySelector("#server-documents"),
   serverLiveChip: document.querySelector("#server-live-chip"),
   serverNeedsYou: document.querySelector("#server-needs-you"),
   serverNeedsYouText: document.querySelector("#server-needs-you-text"),
@@ -292,6 +299,35 @@ elements.serverRefresh.addEventListener("click", async () => {
     await loadServerThreadFromServerWithOptions({});
   } finally {
     elements.serverRefresh.disabled = false;
+  }
+});
+
+elements.serverFileInput.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    await ingestServerFile(file);
+  } catch (error) {
+    elements.serverDocStatus.textContent = `Document intake failed: ${error.message}`;
+    render();
+  } finally {
+    event.target.value = "";
+  }
+});
+
+elements.serverUrlIngest.addEventListener("click", async () => {
+  const sourceUrl = elements.serverUrlInput.value.trim();
+  if (!sourceUrl) {
+    elements.serverUrlInput.focus();
+    return;
+  }
+
+  try {
+    await ingestServerUrl(sourceUrl);
+  } catch (error) {
+    elements.serverDocStatus.textContent = `Page intake failed: ${error.message}`;
+    render();
   }
 });
 
@@ -477,6 +513,7 @@ function render(options = {}) {
 
 function renderServerThread() {
   const bubble = getSelected();
+  const selectedDocument = getSelectedServerDocument();
   const messageCount = serverThread.messages.filter((message) => !message.pending).length;
   const waitingMessages = serverThread.messages.filter((message) => message.needsUser);
   const latestWaitingMessage = waitingMessages.at(-1) || null;
@@ -489,6 +526,15 @@ function renderServerThread() {
   elements.serverContext.textContent = bubble
     ? `${bubble.type}: ${shorten(bubble.content, 120)}`
     : "No bubble is in focus yet. Pick one to let the conversation lean on it.";
+  elements.serverDocCount.textContent = `${serverThread.documents.length}`;
+  elements.serverDocSubtitle.textContent = selectedDocument
+    ? `Selected source: ${shorten(selectedDocument.title, 54)}`
+    : "Bring in web pages, PDFs, and EPUBs so Soap Server can read with you.";
+  elements.serverDocStatus.textContent = serverThreadAvailable
+    ? "Soap Server can extract and share sources here across your Mac and phone."
+    : "Document intake needs Soap Server to be live. Browser fallback keeps the chat, but not the extraction.";
+  elements.serverUrlIngest.disabled = !serverThreadAvailable;
+  elements.serverFileInput.disabled = !serverThreadAvailable;
   elements.serverUseSelected.disabled = !bubble;
   elements.serverLiveChip.textContent = serverThreadAvailable
     ? serverThreadSyncAt
@@ -508,6 +554,7 @@ function renderServerThread() {
     elements.serverNeedsYouText.textContent = shorten(latestWaitingMessage.text, 160);
   }
 
+  renderServerDocuments();
   elements.serverMessages.innerHTML = "";
   serverThread.messages.forEach((message) => {
     const item = document.createElement("div");
@@ -515,6 +562,37 @@ function renderServerThread() {
     item.innerHTML = `<strong>${message.role === "assistant" ? "Bubble Server" : "You"}</strong>${escapeHtml(message.text)}<time>${formatDate(message.createdAt)}</time>`;
     elements.serverMessages.append(item);
   });
+}
+
+function renderServerDocuments() {
+  elements.serverDocuments.innerHTML = "";
+  if (!serverThread.documents.length) {
+    const empty = document.createElement("div");
+    empty.className = "server-document-empty";
+    empty.textContent = "No sources are loaded yet. Drop in a PDF, EPUB, or web page and it will start living here.";
+    elements.serverDocuments.append(empty);
+    return;
+  }
+
+  serverThread.documents
+    .slice()
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    .forEach((documentRecord) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `server-document${serverThread.selectedDocumentId === documentRecord.id ? " active" : ""}`;
+      button.innerHTML = `
+        <strong>${escapeHtml(shorten(documentRecord.title, 54))}</strong>
+        <span>${escapeHtml(`${documentRecord.sourceType} · ${shorten(documentRecord.sourceLabel, 56)}`)}</span>
+        <p>${escapeHtml(shorten(documentRecord.excerpt || "No excerpt yet.", 160))}</p>
+      `;
+      button.addEventListener("click", () => {
+        serverThread.selectedDocumentId = documentRecord.id;
+        saveServerThread();
+        render();
+      });
+      elements.serverDocuments.append(button);
+    });
 }
 
 function renderClientSurface() {
@@ -706,6 +784,7 @@ function buildModelInput(bubble) {
 
 function buildServerInput(text) {
   const selectedBubble = getSelected();
+  const selectedDocument = getSelectedServerDocument();
   const recentBubbleContext = state.bubbles
     .slice(0, 5)
     .map((bubble) => `- ${bubble.type}: ${bubble.content}`)
@@ -723,6 +802,16 @@ function buildServerInput(text) {
           : "Selected bubble links: none yet"
       ].join("\n\n")
     : "Selected bubble: none";
+  const documentContext = selectedDocument
+    ? [
+        `Selected source title: ${selectedDocument.title}`,
+        `Selected source kind: ${selectedDocument.sourceType}`,
+        `Selected source label: ${selectedDocument.sourceLabel}`,
+        `Selected source excerpt: ${selectedDocument.excerpt || "No excerpt yet."}`,
+        "",
+        `Selected source text:\n${selectedDocument.text.slice(0, 12000)}`
+      ].join("\n")
+    : "Selected source: none";
 
   const transcript = serverThread.messages
     .filter((message) => ["user", "assistant"].includes(message.role))
@@ -740,8 +829,11 @@ function buildServerInput(text) {
         "You are replying inside Bubble Server, a browser-based BubblePath conversation lane.",
         "Stay warm, grounded, and useful.",
         "When a selected bubble exists, treat it as the live thought-space context.",
+        "When a selected source exists, treat it as live reading context you can quote and reason from.",
         "",
         selectedContext,
+        "",
+        documentContext,
         "",
         `Recent bubbles:\n${recentBubbleContext || "- none yet"}`,
         "",
@@ -1009,14 +1101,8 @@ async function loadServerThreadFromServerWithOptions(options = {}) {
 
     serverThreadAvailable = true;
     serverThreadSyncAt = payload.data?.updatedAt || payload.data?.savedAt || new Date().toISOString();
-    if (Array.isArray(payload.data?.messages) && payload.data.messages.length) {
-      const nextThread = {
-        draft: typeof payload.data?.draft === "string" ? payload.data.draft : "",
-        messages: payload.data.messages.map((message) => ({
-          ...message,
-          role: message.role || "assistant"
-        }))
-      };
+    if (Array.isArray(payload.data?.messages)) {
+      const nextThread = normalizeServerThread(payload.data);
 
       if (!sameServerThreadContent(serverThread, nextThread)) {
         serverThread = nextThread;
@@ -1049,7 +1135,9 @@ async function saveServerThreadNow() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         draft: serverThread.draft || "",
-        messages: serverThread.messages
+        messages: serverThread.messages,
+        documents: serverThread.documents,
+        selectedDocumentId: serverThread.selectedDocumentId || ""
       })
     });
     const result = await response.json().catch(() => ({}));
@@ -1112,25 +1200,20 @@ function loadServerThread() {
           createdAt: new Date().toISOString()
         }
       ],
-      draft: ""
+      draft: "",
+      documents: [],
+      selectedDocumentId: ""
     };
   }
 
   try {
-    const parsed = JSON.parse(saved);
-    return {
-      draft: typeof parsed.draft === "string" ? parsed.draft : "",
-      messages: Array.isArray(parsed.messages)
-        ? parsed.messages.map((message) => ({
-            ...message,
-            role: message.role || "assistant"
-          }))
-        : []
-    };
+    return normalizeServerThread(JSON.parse(saved));
   } catch {
     return {
       draft: "",
-      messages: []
+      messages: [],
+      documents: [],
+      selectedDocumentId: ""
     };
   }
 }
@@ -1138,10 +1221,116 @@ function loadServerThread() {
 function sameServerThreadContent(left, right) {
   return JSON.stringify({
     draft: left.draft || "",
-    messages: left.messages || []
+    messages: left.messages || [],
+    documents: left.documents || [],
+    selectedDocumentId: left.selectedDocumentId || ""
   }) === JSON.stringify({
     draft: right.draft || "",
-    messages: right.messages || []
+    messages: right.messages || [],
+    documents: right.documents || [],
+    selectedDocumentId: right.selectedDocumentId || ""
+  });
+}
+
+function normalizeServerThread(parsed) {
+  return {
+    draft: typeof parsed.draft === "string" ? parsed.draft : "",
+    messages: Array.isArray(parsed.messages)
+      ? parsed.messages.map((message) => ({
+          ...message,
+          role: message.role || "assistant"
+        }))
+      : [],
+    documents: Array.isArray(parsed.documents)
+      ? parsed.documents.map((documentRecord) => ({
+          id: documentRecord.id || crypto.randomUUID(),
+          title: documentRecord.title || "Untitled source",
+          sourceType: documentRecord.sourceType || "document",
+          sourceLabel: documentRecord.sourceLabel || documentRecord.title || "Untitled source",
+          createdAt: documentRecord.createdAt || new Date().toISOString(),
+          excerpt: documentRecord.excerpt || "",
+          text: documentRecord.text || ""
+        }))
+      : [],
+    selectedDocumentId: typeof parsed.selectedDocumentId === "string" ? parsed.selectedDocumentId : ""
+  };
+}
+
+function getSelectedServerDocument() {
+  return serverThread.documents.find((documentRecord) => documentRecord.id === serverThread.selectedDocumentId) || null;
+}
+
+async function ingestServerFile(file) {
+  if (!serverThreadAvailable) {
+    render();
+    return;
+  }
+
+  elements.serverDocStatus.textContent = `Soap Server is reading ${file.name}...`;
+  const contentBase64 = await fileToBase64(file);
+  const response = await fetch("/api/ingest-document", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "upload",
+      fileName: file.name,
+      mimeType: file.type,
+      contentBase64
+    })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok || !payload.document) {
+    throw new Error(payload.error || `${response.status} ${response.statusText}`);
+  }
+  commitIngestedDocument(payload.document);
+}
+
+async function ingestServerUrl(sourceUrl) {
+  if (!serverThreadAvailable) {
+    render();
+    return;
+  }
+
+  elements.serverDocStatus.textContent = `Soap Server is fetching ${sourceUrl}...`;
+  const response = await fetch("/api/ingest-document", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "url",
+      url: sourceUrl
+    })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok || !payload.document) {
+    throw new Error(payload.error || `${response.status} ${response.statusText}`);
+  }
+  commitIngestedDocument(payload.document);
+  elements.serverUrlInput.value = "";
+}
+
+function commitIngestedDocument(documentRecord) {
+  serverThread.documents = [documentRecord, ...serverThread.documents.filter((item) => item.id !== documentRecord.id)].slice(0, 12);
+  serverThread.selectedDocumentId = documentRecord.id;
+  serverThread.messages.push({
+    id: crypto.randomUUID(),
+    role: "assistant",
+    text: `Loaded ${documentRecord.sourceType} source "${documentRecord.title}" into Soap Server. You can ask me about it now, and that source will travel with the shared thread.`,
+    createdAt: new Date().toISOString()
+  });
+  saveServerThread();
+  render();
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error("File read failed."));
+    reader.readAsDataURL(file);
   });
 }
 

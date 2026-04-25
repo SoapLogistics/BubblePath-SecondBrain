@@ -135,6 +135,26 @@
             <span id="server-context">No bubble is in focus yet. Pick one to let the conversation lean on it.</span>
           </div>
 
+          <div class="server-docs-card">
+            <div class="section-title">
+              <div>
+                <h3>Source Intake</h3>
+                <p id="server-docs-subtitle">Bring in web pages, PDFs, and EPUBs so Soap Server can read with you.</p>
+              </div>
+              <span id="server-doc-count">0</span>
+            </div>
+            <div id="server-doc-status" class="server-doc-status">Soap Server is checking whether document intake is ready.</div>
+            <div class="server-doc-inputs">
+              <label class="server-file-picker" for="server-file-input">Choose PDF, EPUB, or text file</label>
+              <input id="server-file-input" class="hidden" type="file" accept=".pdf,.epub,.txt,.md,.html,.htm,application/pdf,application/epub+zip,text/plain,text/markdown,text/html">
+              <div class="server-url-row">
+                <input id="server-url-input" type="url" placeholder="https://example.com/article">
+                <button type="button" id="server-url-ingest" class="secondary">Fetch Page</button>
+              </div>
+            </div>
+            <div id="server-documents" class="server-documents"></div>
+          </div>
+
           <div class="server-live-row">
             <div class="server-live-chip" id="server-live-chip">Checking Soap Server...</div>
             <button type="button" id="server-refresh" class="secondary">Refresh</button>

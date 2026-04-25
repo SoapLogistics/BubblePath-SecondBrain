@@ -1,6 +1,8 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
+const { execFileSync } = require("node:child_process");
 
 const root = __dirname;
 const host = process.env.HOST || "127.0.0.1";
@@ -9,9 +11,11 @@ const vaultDir = path.join(root, "bubblepath-vault");
 const backupsDir = path.join(vaultDir, "backups");
 const dataFile = path.join(vaultDir, "bubblepath-data.json");
 const serverThreadFile = path.join(vaultDir, "bubblepath-server-thread.json");
+const ingestTmpDir = path.join(vaultDir, "ingest-tmp");
 const minBackupIntervalMs = 60 * 1000;
 const maxRegularBackups = 24;
 const maxPreRestoreBackups = 12;
+const maxBodyBytes = 1024 * 1024 * 30;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -68,6 +72,10 @@ const server = http.createServer(async (req, res) => {
       return writeServerThread(req, res);
     }
 
+    if (method === "POST" && url.pathname === "/api/ingest-document") {
+      return ingestDocument(req, res);
+    }
+
     if (method === "POST" && url.pathname === "/api/restore") {
       return restoreBackup(req, res);
     }
@@ -89,6 +97,7 @@ server.listen(port, host, () => {
 
 function ensureVault() {
   fs.mkdirSync(backupsDir, { recursive: true });
+  fs.mkdirSync(ingestTmpDir, { recursive: true });
   const readme = path.join(vaultDir, "README.md");
   if (!fs.existsSync(readme)) {
     fs.writeFileSync(
@@ -136,12 +145,14 @@ function readServerThread(res) {
         kind: "server-thread",
         updatedAt: "",
         draft: "",
-        messages: []
+        messages: [],
+        documents: [],
+        selectedDocumentId: ""
       }
     });
   }
 
-  const data = JSON.parse(fs.readFileSync(serverThreadFile, "utf8"));
+  const data = normalizeServerThread(JSON.parse(fs.readFileSync(serverThreadFile, "utf8")));
   return sendJson(res, 200, {
     ok: true,
     exists: true,
@@ -225,7 +236,9 @@ async function writeServerThread(req, res) {
     updatedAt,
     savedAt: updatedAt,
     draft: typeof data.draft === "string" ? data.draft : "",
-    messages: Array.isArray(data.messages) ? data.messages : []
+    messages: Array.isArray(data.messages) ? data.messages : [],
+    documents: normalizeDocuments(data.documents),
+    selectedDocumentId: typeof data.selectedDocumentId === "string" ? data.selectedDocumentId : ""
   };
   fs.writeFileSync(serverThreadFile, `${JSON.stringify(thread, null, 2)}\n`);
 
@@ -234,6 +247,39 @@ async function writeServerThread(req, res) {
     serverThreadFile,
     updatedAt
   });
+}
+
+async function ingestDocument(req, res) {
+  const raw = await readBody(req);
+  const body = JSON.parse(raw);
+  const mode = String(body.mode || "");
+
+  if (mode === "upload") {
+    const fileName = path.basename(String(body.fileName || "")).trim();
+    const contentBase64 = String(body.contentBase64 || "");
+    if (!fileName || !contentBase64) {
+      return sendJson(res, 400, { ok: false, error: "Upload needs a file name and file content." });
+    }
+
+    const document = extractUploadedDocument({
+      fileName,
+      mimeType: String(body.mimeType || ""),
+      contentBase64
+    });
+    return sendJson(res, 200, { ok: true, document });
+  }
+
+  if (mode === "url") {
+    const sourceUrl = String(body.url || "").trim();
+    if (!sourceUrl) {
+      return sendJson(res, 400, { ok: false, error: "A web page URL is required." });
+    }
+
+    const document = await extractUrlDocument(sourceUrl);
+    return sendJson(res, 200, { ok: true, document });
+  }
+
+  return sendJson(res, 400, { ok: false, error: "Unsupported document ingest mode." });
 }
 
 function writeBackupIfNeeded(body) {
@@ -328,7 +374,7 @@ function readBody(req) {
     let body = "";
     req.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 1024 * 1024 * 10) {
+      if (body.length > maxBodyBytes) {
         req.destroy(new Error("Request body too large"));
       }
     });
@@ -345,4 +391,162 @@ function sendJson(res, status, value) {
 function sendText(res, status, value) {
   res.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
   res.end(value);
+}
+
+function normalizeServerThread(data) {
+  return {
+    app: "BubblePath",
+    kind: "server-thread",
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : "",
+    savedAt: typeof data.savedAt === "string" ? data.savedAt : "",
+    draft: typeof data.draft === "string" ? data.draft : "",
+    messages: Array.isArray(data.messages) ? data.messages : [],
+    documents: normalizeDocuments(data.documents),
+    selectedDocumentId: typeof data.selectedDocumentId === "string" ? data.selectedDocumentId : ""
+  };
+}
+
+function normalizeDocuments(documents) {
+  return Array.isArray(documents)
+    ? documents
+        .filter(Boolean)
+        .map((document) => ({
+          id: String(document.id || crypto.randomUUID()),
+          title: String(document.title || "Untitled source"),
+          sourceType: String(document.sourceType || "document"),
+          sourceLabel: String(document.sourceLabel || document.title || "Untitled source"),
+          createdAt: typeof document.createdAt === "string" ? document.createdAt : new Date().toISOString(),
+          excerpt: String(document.excerpt || ""),
+          text: String(document.text || "")
+        }))
+    : [];
+}
+
+function extractUploadedDocument({ fileName, mimeType, contentBase64 }) {
+  const extension = path.extname(fileName).toLowerCase();
+  const tempBase = path.join(ingestTmpDir, `${Date.now()}-${crypto.randomUUID()}`);
+  const tempPath = `${tempBase}${extension || ""}`;
+  const sourceBuffer = Buffer.from(contentBase64, "base64");
+  fs.writeFileSync(tempPath, sourceBuffer);
+
+  try {
+    let text = "";
+    if (extension === ".pdf" || mimeType === "application/pdf") {
+      text = execFileSync("pdftotext", ["-layout", "-enc", "UTF-8", tempPath, "-"], {
+        encoding: "utf8",
+        maxBuffer: maxBodyBytes
+      });
+    } else if (extension === ".epub" || mimeType === "application/epub+zip") {
+      text = execFileSync("pandoc", [tempPath, "-t", "plain"], {
+        encoding: "utf8",
+        maxBuffer: maxBodyBytes
+      });
+    } else {
+      text = sourceBuffer.toString("utf8");
+      if (extension === ".html" || extension === ".htm" || mimeType === "text/html") {
+        text = htmlToText(text);
+      }
+    }
+
+    const cleanText = normalizeExtractedText(text);
+    return buildDocumentRecord({
+      title: path.basename(fileName, extension) || fileName,
+      sourceType: extension === ".pdf"
+        ? "pdf"
+        : extension === ".epub"
+          ? "epub"
+          : extension === ".html" || extension === ".htm"
+            ? "webpage"
+            : "document",
+      sourceLabel: fileName,
+      text: cleanText
+    });
+  } finally {
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+  }
+}
+
+async function extractUrlDocument(sourceUrl) {
+  let url;
+  try {
+    url = new URL(sourceUrl);
+  } catch {
+    throw new Error("That URL does not look valid yet.");
+  }
+
+  if (!["http:", "https:"].includes(url.protocol)) {
+    throw new Error("Only http and https web pages are supported right now.");
+  }
+
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "BubblePath Soap Server"
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Page fetch failed: ${response.status} ${response.statusText}`);
+  }
+
+  const html = await response.text();
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : url.hostname;
+  const text = normalizeExtractedText(htmlToText(html));
+
+  return buildDocumentRecord({
+    title: title || url.hostname,
+    sourceType: "webpage",
+    sourceLabel: url.toString(),
+    text
+  });
+}
+
+function buildDocumentRecord({ title, sourceType, sourceLabel, text }) {
+  return {
+    id: crypto.randomUUID(),
+    title: title || "Untitled source",
+    sourceType,
+    sourceLabel,
+    createdAt: new Date().toISOString(),
+    excerpt: buildExcerpt(text),
+    text
+  };
+}
+
+function buildExcerpt(text) {
+  return text
+    .slice(0, 360)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeExtractedText(text) {
+  return String(text || "")
+    .replace(/\u0000/g, "")
+    .replace(/\r/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function htmlToText(html) {
+  return decodeHtmlEntities(
+    String(html || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<\/(p|div|section|article|li|h1|h2|h3|h4|h5|h6|tr)>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+  );
+}
+
+function decodeHtmlEntities(text) {
+  return String(text || "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
 }
