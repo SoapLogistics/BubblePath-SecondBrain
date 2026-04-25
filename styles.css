@@ -666,6 +666,12 @@ select {
   gap: 10px;
 }
 
+.server-compose-status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .server-form textarea {
   min-height: 96px;
 }

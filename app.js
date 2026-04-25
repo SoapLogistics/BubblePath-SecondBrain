@@ -128,7 +128,9 @@ const elements = {
   serverNeedsYouText: document.querySelector("#server-needs-you-text"),
   serverMessages: document.querySelector("#server-messages"),
   serverForm: document.querySelector("#server-form"),
+  serverComposeStatus: document.querySelector("#server-compose-status"),
   serverInput: document.querySelector("#server-input"),
+  serverSend: document.querySelector("#server-send"),
   serverUseSelected: document.querySelector("#server-use-selected"),
   serverRefresh: document.querySelector("#server-refresh")
 };
@@ -485,6 +487,10 @@ function renderServerThread() {
       : "Soap Server live"
     : "Soap Server unavailable · browser fallback";
   elements.serverLiveChip.className = `server-live-chip${serverThreadAvailable ? " live" : ""}`;
+  elements.serverComposeStatus.textContent = serverThreadAvailable
+    ? "Messages you send here are going to the shared Soap Server thread."
+    : "Soap Server is unavailable right now, so this page is falling back to local browser state until the server comes back.";
+  elements.serverSend.textContent = serverThreadAvailable ? "Send to Soap Server" : "Send Locally";
   elements.serverNeedsYou.classList.toggle("hidden", !latestWaitingMessage);
   if (latestWaitingMessage) {
     elements.serverNeedsYouText.textContent = shorten(latestWaitingMessage.text, 160);
