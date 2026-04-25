@@ -1,6 +1,7 @@
 const storageKey = "bubblepath.v1";
 const settingsKey = "bubblepath.settings.v1";
 const serverThreadKey = "bubblepath.server.v1";
+const notificationStateKey = "bubblepath.notify.v1";
 const defaultGuidePrompt = [
   "You are the user's BubblePath thinking companion.",
   "Be warm, clear, honest, and grounded.",
@@ -61,6 +62,7 @@ let serverThreadDirty = false;
 let serverThreadSyncAt = "";
 let serverThreadSyncTimer = null;
 let serverDraftSyncTimer = null;
+let notificationState = loadNotificationState();
 let vaultInfo = {
   dataFile: "",
   backupFile: "",
@@ -172,6 +174,7 @@ window.addEventListener("resize", () => {
 
 hydrateSettings();
 syncMobileViewFromHash();
+primeNotificationState();
 render();
 loadVaultState();
 registerServiceWorker();
@@ -580,8 +583,7 @@ function renderServerThread() {
   const bubble = getSelected();
   const selectedDocument = getSelectedServerDocument();
   const messageCount = serverThread.messages.filter((message) => !message.pending).length;
-  const waitingMessages = serverThread.messages.filter((message) => message.needsUser);
-  const latestWaitingMessage = waitingMessages.at(-1) || null;
+  const latestWaitingMessage = getLatestNeedsUserMessage();
   elements.serverCount.textContent = serverThreadAvailable ? `${messageCount} live` : `${messageCount} local`;
   elements.serverSubtitle.textContent = bubble
     ? `Talk inside the world of the selected thinking bubble, not outside it.${serverThreadAvailable ? ` This lane is now living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.` : ""}`
@@ -1210,6 +1212,7 @@ async function loadServerThreadFromServerWithOptions(options = {}) {
         serverThread = nextThread;
         localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
         serverThreadDirty = false;
+        maybeNotifyServerThreadActivity({ source: "server-sync" });
         render();
         return;
       }
@@ -1250,6 +1253,7 @@ async function saveServerThreadNow() {
     serverThreadAvailable = true;
     serverThreadDirty = false;
     serverThreadSyncAt = result.updatedAt || new Date().toISOString();
+    maybeNotifyServerThreadActivity({ source: "local-save" });
     render();
     return { ok: true, ...result };
   } catch (error) {
@@ -1317,6 +1321,87 @@ function loadServerThread() {
       documents: [],
       selectedDocumentId: ""
     };
+  }
+}
+
+function loadNotificationState() {
+  const saved = localStorage.getItem(notificationStateKey);
+  if (!saved) {
+    return {
+      lastNeedsUserId: "",
+      lastAssistantId: ""
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(saved);
+    return {
+      lastNeedsUserId: typeof parsed.lastNeedsUserId === "string" ? parsed.lastNeedsUserId : "",
+      lastAssistantId: typeof parsed.lastAssistantId === "string" ? parsed.lastAssistantId : ""
+    };
+  } catch {
+    return {
+      lastNeedsUserId: "",
+      lastAssistantId: ""
+    };
+  }
+}
+
+function saveNotificationState() {
+  localStorage.setItem(notificationStateKey, JSON.stringify(notificationState));
+}
+
+function primeNotificationState() {
+  const latestNeedsUser = getLatestNeedsUserMessage();
+  const latestAssistant = getLatestAssistantMessage();
+  notificationState.lastNeedsUserId = latestNeedsUser?.id || notificationState.lastNeedsUserId || "";
+  notificationState.lastAssistantId = latestAssistant?.id || notificationState.lastAssistantId || "";
+  saveNotificationState();
+}
+
+function getLatestNeedsUserMessage() {
+  return serverThread.messages.filter((message) => message.needsUser && !message.pending).at(-1) || null;
+}
+
+function getLatestAssistantMessage() {
+  return serverThread.messages.filter((message) => message.role === "assistant" && !message.pending).at(-1) || null;
+}
+
+function shouldSendBrowserNotification() {
+  if (!("Notification" in window)) return false;
+  if (Notification.permission !== "granted") return false;
+  return document.visibilityState === "hidden" || !document.hasFocus();
+}
+
+function maybeNotifyServerThreadActivity({ source }) {
+  const latestNeedsUser = getLatestNeedsUserMessage();
+  const latestAssistant = getLatestAssistantMessage();
+
+  if (latestNeedsUser?.id && latestNeedsUser.id !== notificationState.lastNeedsUserId) {
+    notificationState.lastNeedsUserId = latestNeedsUser.id;
+    saveNotificationState();
+    if (shouldSendBrowserNotification()) {
+      new Notification("Soap Bubbles needs you", {
+        body: shorten(latestNeedsUser.text, 140),
+        tag: `soap-bubbles-needs-you-${latestNeedsUser.id}`
+      });
+    }
+    return;
+  }
+
+  if (
+    source === "server-sync" &&
+    latestAssistant?.id &&
+    latestAssistant.id !== notificationState.lastAssistantId
+  ) {
+    notificationState.lastAssistantId = latestAssistant.id;
+    saveNotificationState();
+    if (shouldSendBrowserNotification()) {
+      new Notification("Soap Bubbles replied", {
+        body: shorten(latestAssistant.text, 140),
+        tag: `soap-bubbles-reply-${latestAssistant.id}`
+      });
+    }
   }
 }
 
