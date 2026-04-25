@@ -14,6 +14,7 @@ Last updated: 2026-04-25
 - Bubble Server’s server-backed thread now carries a stable `updatedAt` timestamp from Soap Server itself, so client-side freshness no longer relies only on browser-local timing
 - Bubble Server now also has a visible `Needs You` tray for server-thread messages marked as waiting on the user, so approvals and blockers have a clearer home in the client
 - Bubble Server’s compose area now also says whether messages are going to the shared Soap Server thread or only to browser-local fallback state, so the client tells the truth about where your conversation is landing
+- Bubble Server’s unsent compose draft now also lives in the server-backed thread envelope, so half-written thoughts can survive a device handoff between Mac and phone instead of getting stranded on one screen
 - Local vault server in `server.js`
 - Disk vault folder at `bubblepath-vault/`
 - Latest data file at `bubblepath-vault/bubblepath-data.json`

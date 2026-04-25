@@ -135,6 +135,7 @@ function readServerThread(res) {
         app: "BubblePath",
         kind: "server-thread",
         updatedAt: "",
+        draft: "",
         messages: []
       }
     });
@@ -223,6 +224,7 @@ async function writeServerThread(req, res) {
     kind: "server-thread",
     updatedAt,
     savedAt: updatedAt,
+    draft: typeof data.draft === "string" ? data.draft : "",
     messages: Array.isArray(data.messages) ? data.messages : []
   };
   fs.writeFileSync(serverThreadFile, `${JSON.stringify(thread, null, 2)}\n`);

@@ -60,6 +60,7 @@ let serverThreadAvailable = false;
 let serverThreadDirty = false;
 let serverThreadSyncAt = "";
 let serverThreadSyncTimer = null;
+let serverDraftSyncTimer = null;
 let vaultInfo = {
   dataFile: "",
   backupFile: "",
@@ -147,6 +148,11 @@ serverThreadSyncTimer = setInterval(() => {
     loadServerThreadFromServerWithOptions({ silent: true });
   }
 }, 5000);
+
+elements.serverInput.addEventListener("input", () => {
+  serverThread.draft = elements.serverInput.value;
+  saveServerThread();
+});
 
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -275,6 +281,8 @@ elements.serverUseSelected.addEventListener("click", () => {
   elements.serverInput.value = elements.serverInput.value.trim()
     ? `${elements.serverInput.value.trim()}\n\n${intro}`
     : intro;
+  serverThread.draft = elements.serverInput.value;
+  saveServerThread();
   elements.serverInput.focus();
 });
 
@@ -299,6 +307,7 @@ elements.serverForm.addEventListener("submit", async (event) => {
     createdAt: new Date().toISOString()
   });
   elements.serverInput.value = "";
+  serverThread.draft = "";
 
   const pendingMessage = {
     id: crypto.randomUUID(),
@@ -491,6 +500,9 @@ function renderServerThread() {
     ? "Messages you send here are going to the shared Soap Server thread."
     : "Soap Server is unavailable right now, so this page is falling back to local browser state until the server comes back.";
   elements.serverSend.textContent = serverThreadAvailable ? "Send to Soap Server" : "Send Locally";
+  if (document.activeElement !== elements.serverInput && elements.serverInput.value !== (serverThread.draft || "")) {
+    elements.serverInput.value = serverThread.draft || "";
+  }
   elements.serverNeedsYou.classList.toggle("hidden", !latestWaitingMessage);
   if (latestWaitingMessage) {
     elements.serverNeedsYouText.textContent = shorten(latestWaitingMessage.text, 160);
@@ -999,13 +1011,14 @@ async function loadServerThreadFromServerWithOptions(options = {}) {
     serverThreadSyncAt = payload.data?.updatedAt || payload.data?.savedAt || new Date().toISOString();
     if (Array.isArray(payload.data?.messages) && payload.data.messages.length) {
       const nextThread = {
+        draft: typeof payload.data?.draft === "string" ? payload.data.draft : "",
         messages: payload.data.messages.map((message) => ({
           ...message,
           role: message.role || "assistant"
         }))
       };
 
-      if (!sameServerThreadMessages(serverThread.messages, nextThread.messages)) {
+      if (!sameServerThreadContent(serverThread, nextThread)) {
         serverThread = nextThread;
         localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
         serverThreadDirty = false;
@@ -1034,7 +1047,10 @@ async function saveServerThreadNow() {
     const response = await fetch("/api/server-thread", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: serverThread.messages })
+      body: JSON.stringify({
+        draft: serverThread.draft || "",
+        messages: serverThread.messages
+      })
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) {
@@ -1095,13 +1111,15 @@ function loadServerThread() {
           text: "Welcome to Bubble Server. This is the first pass at making BubblePath feel like a place where we can actually talk inside the thought-space.",
           createdAt: new Date().toISOString()
         }
-      ]
+      ],
+      draft: ""
     };
   }
 
   try {
     const parsed = JSON.parse(saved);
     return {
+      draft: typeof parsed.draft === "string" ? parsed.draft : "",
       messages: Array.isArray(parsed.messages)
         ? parsed.messages.map((message) => ({
             ...message,
@@ -1111,13 +1129,20 @@ function loadServerThread() {
     };
   } catch {
     return {
+      draft: "",
       messages: []
     };
   }
 }
 
-function sameServerThreadMessages(left, right) {
-  return JSON.stringify(left) === JSON.stringify(right);
+function sameServerThreadContent(left, right) {
+  return JSON.stringify({
+    draft: left.draft || "",
+    messages: left.messages || []
+  }) === JSON.stringify({
+    draft: right.draft || "",
+    messages: right.messages || []
+  });
 }
 
 function hydrateSettings() {
