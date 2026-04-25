@@ -131,7 +131,12 @@ function readServerThread(res) {
       ok: true,
       exists: false,
       serverThreadFile,
-      data: { messages: [] }
+      data: {
+        app: "BubblePath",
+        kind: "server-thread",
+        updatedAt: "",
+        messages: []
+      }
     });
   }
 
@@ -212,17 +217,20 @@ async function writeState(req, res) {
 async function writeServerThread(req, res) {
   const raw = await readBody(req);
   const data = JSON.parse(raw);
+  const updatedAt = new Date().toISOString();
   const thread = {
     app: "BubblePath",
     kind: "server-thread",
-    savedAt: new Date().toISOString(),
+    updatedAt,
+    savedAt: updatedAt,
     messages: Array.isArray(data.messages) ? data.messages : []
   };
   fs.writeFileSync(serverThreadFile, `${JSON.stringify(thread, null, 2)}\n`);
 
   return sendJson(res, 200, {
     ok: true,
-    serverThreadFile
+    serverThreadFile,
+    updatedAt
   });
 }
 

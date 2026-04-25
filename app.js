@@ -982,7 +982,7 @@ async function loadServerThreadFromServerWithOptions(options = {}) {
     if (!payload.ok) throw new Error(payload.error || "Server thread load failed.");
 
     serverThreadAvailable = true;
-    serverThreadSyncAt = payload.data?.savedAt || new Date().toISOString();
+    serverThreadSyncAt = payload.data?.updatedAt || payload.data?.savedAt || new Date().toISOString();
     if (Array.isArray(payload.data?.messages) && payload.data.messages.length) {
       const nextThread = {
         messages: payload.data.messages.map((message) => ({
@@ -1029,7 +1029,7 @@ async function saveServerThreadNow() {
 
     serverThreadAvailable = true;
     serverThreadDirty = false;
-    serverThreadSyncAt = new Date().toISOString();
+    serverThreadSyncAt = result.updatedAt || new Date().toISOString();
     render();
     return { ok: true, ...result };
   } catch (error) {
