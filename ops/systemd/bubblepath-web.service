@@ -1,0 +1,18 @@
+[Unit]
+Description=BubblePath Soap Bubbles web client
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/bubblepath/repos/bubblepath
+Environment=HOST=127.0.0.1
+Environment=PORT=5173
+ExecStart=/usr/bin/node /srv/bubblepath/repos/bubblepath/server.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/srv/bubblepath/logs/bubblepath-web.log
+StandardError=append:/srv/bubblepath/logs/bubblepath-web-error.log
+
+[Install]
+WantedBy=default.target
