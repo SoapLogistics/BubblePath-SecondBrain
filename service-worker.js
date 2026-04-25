@@ -1,9 +1,9 @@
-const cacheName = "bubblepath-shell-v3";
+const cacheName = "bubblepath-shell-v4";
 const shellFiles = [
   "/",
   "/index.html",
-  "/styles.css?v=20260425-2147",
-  "/app.js?v=20260425-2147",
+  "/styles.css?v=20260425-2204",
+  "/app.js?v=20260425-2204",
   "/manifest.webmanifest",
   "/icon.svg"
 ];

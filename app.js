@@ -172,6 +172,18 @@ window.addEventListener("resize", () => {
   renderMobileView();
 });
 
+window.addEventListener("focus", () => {
+  markServerThreadSeen();
+  render();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    markServerThreadSeen();
+    render();
+  }
+});
+
 hydrateSettings();
 syncMobileViewFromHash();
 primeNotificationState();
@@ -605,8 +617,8 @@ function renderServerThread() {
   elements.serverUseSelected.disabled = !bubble;
   elements.serverLiveChip.textContent = serverThreadAvailable
     ? serverThreadSyncAt
-      ? `Soap Server live · synced ${formatTime(serverThreadSyncAt)}`
-      : "Soap Server live"
+      ? `Soap Server live · synced ${formatTime(serverThreadSyncAt)}${notificationState.unreadCount ? ` · ${notificationState.unreadCount} new` : ""}`
+      : `Soap Server live${notificationState.unreadCount ? ` · ${notificationState.unreadCount} new` : ""}`
     : "Soap Server unavailable · browser fallback";
   elements.serverLiveChip.className = `server-live-chip${serverThreadAvailable ? " live" : ""}`;
   elements.serverComposeStatus.textContent = serverThreadAvailable
@@ -1329,7 +1341,9 @@ function loadNotificationState() {
   if (!saved) {
     return {
       lastNeedsUserId: "",
-      lastAssistantId: ""
+      lastAssistantId: "",
+      lastSeenMessageId: "",
+      unreadCount: 0
     };
   }
 
@@ -1337,12 +1351,16 @@ function loadNotificationState() {
     const parsed = JSON.parse(saved);
     return {
       lastNeedsUserId: typeof parsed.lastNeedsUserId === "string" ? parsed.lastNeedsUserId : "",
-      lastAssistantId: typeof parsed.lastAssistantId === "string" ? parsed.lastAssistantId : ""
+      lastAssistantId: typeof parsed.lastAssistantId === "string" ? parsed.lastAssistantId : "",
+      lastSeenMessageId: typeof parsed.lastSeenMessageId === "string" ? parsed.lastSeenMessageId : "",
+      unreadCount: Number.isFinite(parsed.unreadCount) ? Math.max(0, parsed.unreadCount) : 0
     };
   } catch {
     return {
       lastNeedsUserId: "",
-      lastAssistantId: ""
+      lastAssistantId: "",
+      lastSeenMessageId: "",
+      unreadCount: 0
     };
   }
 }
@@ -1354,8 +1372,11 @@ function saveNotificationState() {
 function primeNotificationState() {
   const latestNeedsUser = getLatestNeedsUserMessage();
   const latestAssistant = getLatestAssistantMessage();
+  const latestMessage = getLatestServerMessage();
   notificationState.lastNeedsUserId = latestNeedsUser?.id || notificationState.lastNeedsUserId || "";
   notificationState.lastAssistantId = latestAssistant?.id || notificationState.lastAssistantId || "";
+  notificationState.lastSeenMessageId = latestMessage?.id || notificationState.lastSeenMessageId || "";
+  notificationState.unreadCount = 0;
   saveNotificationState();
 }
 
@@ -1367,15 +1388,42 @@ function getLatestAssistantMessage() {
   return serverThread.messages.filter((message) => message.role === "assistant" && !message.pending).at(-1) || null;
 }
 
+function getLatestServerMessage() {
+  return serverThread.messages.filter((message) => !message.pending).at(-1) || null;
+}
+
 function shouldSendBrowserNotification() {
   if (!("Notification" in window)) return false;
   if (Notification.permission !== "granted") return false;
   return document.visibilityState === "hidden" || !document.hasFocus();
 }
 
+function shouldTrackUnreadInBackground() {
+  return document.visibilityState === "hidden" || !document.hasFocus();
+}
+
+function markServerThreadSeen() {
+  const latestMessage = getLatestServerMessage();
+  if (!latestMessage) return;
+  notificationState.lastSeenMessageId = latestMessage.id;
+  notificationState.unreadCount = 0;
+  saveNotificationState();
+}
+
 function maybeNotifyServerThreadActivity({ source }) {
   const latestNeedsUser = getLatestNeedsUserMessage();
   const latestAssistant = getLatestAssistantMessage();
+  const latestMessage = getLatestServerMessage();
+
+  if (latestMessage?.id && latestMessage.id !== notificationState.lastSeenMessageId) {
+    if (shouldTrackUnreadInBackground()) {
+      notificationState.unreadCount += 1;
+    } else {
+      notificationState.lastSeenMessageId = latestMessage.id;
+      notificationState.unreadCount = 0;
+    }
+    saveNotificationState();
+  }
 
   if (latestNeedsUser?.id && latestNeedsUser.id !== notificationState.lastNeedsUserId) {
     notificationState.lastNeedsUserId = latestNeedsUser.id;
