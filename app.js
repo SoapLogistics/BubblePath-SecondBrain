@@ -53,8 +53,11 @@ let serverThread = loadServerThread();
 let selectedId = state.selectedId || state.bubbles[0]?.id || null;
 let dragging = null;
 let vaultSaveTimer = null;
+let serverThreadSaveTimer = null;
 let vaultAvailable = false;
 let vaultDirty = true;
+let serverThreadAvailable = false;
+let serverThreadDirty = false;
 let vaultInfo = {
   dataFile: "",
   backupFile: "",
@@ -129,6 +132,7 @@ render();
 loadVaultState();
 setInterval(() => {
   if (vaultAvailable && vaultDirty) saveVaultNow();
+  if (serverThreadAvailable && serverThreadDirty) saveServerThreadNow();
 }, 10000);
 
 elements.form.addEventListener("submit", (event) => {
@@ -444,8 +448,10 @@ function renderServerThread() {
   const bubble = getSelected();
   elements.serverCount.textContent = serverThread.messages.filter((message) => !message.pending).length;
   elements.serverSubtitle.textContent = bubble
-    ? "Talk inside the world of the selected bubble, not outside it."
-    : "A shared conversation surface for the future Ubox-first setup.";
+    ? `Talk inside the world of the selected bubble, not outside it.${serverThreadAvailable ? " This thread is now living on Soap Server." : ""}`
+    : serverThreadAvailable
+      ? "A shared conversation surface living on Soap Server."
+      : "A shared conversation surface for the future Ubox-first setup.";
   elements.serverContext.textContent = bubble
     ? `${bubble.type}: ${shorten(bubble.content, 120)}`
     : "No bubble is in focus yet. Pick one to let the conversation lean on it.";
@@ -740,6 +746,7 @@ async function loadVaultState() {
       save();
       render();
       refreshBackups();
+      loadServerThreadFromServer();
       return;
     }
 
@@ -747,14 +754,17 @@ async function loadVaultState() {
       await saveVaultNow();
       refreshBackups();
       render();
+      loadServerThreadFromServer();
       return;
     }
 
     await saveVaultNow();
     refreshBackups();
     render();
+    loadServerThreadFromServer();
   } catch {
     vaultAvailable = false;
+    serverThreadAvailable = false;
     render();
   }
 }
@@ -925,6 +935,70 @@ function saveSettings() {
 
 function saveServerThread() {
   localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
+  serverThreadDirty = true;
+  scheduleServerThreadSave();
+}
+
+function scheduleServerThreadSave() {
+  if (!serverThreadAvailable) return;
+  clearTimeout(serverThreadSaveTimer);
+  serverThreadSaveTimer = setTimeout(saveServerThreadNow, 450);
+}
+
+async function loadServerThreadFromServer() {
+  try {
+    const response = await fetch("/api/server-thread");
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    const payload = await response.json();
+    if (!payload.ok) throw new Error(payload.error || "Server thread load failed.");
+
+    serverThreadAvailable = true;
+    if (Array.isArray(payload.data?.messages) && payload.data.messages.length) {
+      serverThread = {
+        messages: payload.data.messages.map((message) => ({
+          ...message,
+          role: message.role || "assistant"
+        }))
+      };
+      localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
+      serverThreadDirty = false;
+      render();
+      return;
+    }
+
+    if (serverThread.messages.length) {
+      await saveServerThreadNow();
+      return;
+    }
+
+    render();
+  } catch {
+    serverThreadAvailable = false;
+    render();
+  }
+}
+
+async function saveServerThreadNow() {
+  try {
+    const response = await fetch("/api/server-thread", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: serverThread.messages })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || `${response.status} ${response.statusText}`);
+    }
+
+    serverThreadAvailable = true;
+    serverThreadDirty = false;
+    render();
+    return { ok: true, ...result };
+  } catch (error) {
+    serverThreadAvailable = false;
+    render();
+    return { ok: false, error: error.message };
+  }
 }
 
 function loadState() {

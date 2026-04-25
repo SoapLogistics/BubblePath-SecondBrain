@@ -8,6 +8,7 @@ const port = Number(process.env.PORT || 5173);
 const vaultDir = path.join(root, "bubblepath-vault");
 const backupsDir = path.join(vaultDir, "backups");
 const dataFile = path.join(vaultDir, "bubblepath-data.json");
+const serverThreadFile = path.join(vaultDir, "bubblepath-server-thread.json");
 const minBackupIntervalMs = 60 * 1000;
 const maxRegularBackups = 24;
 const maxPreRestoreBackups = 12;
@@ -55,8 +56,16 @@ const server = http.createServer(async (req, res) => {
       return readBackups(res);
     }
 
+    if (method === "GET" && url.pathname === "/api/server-thread") {
+      return readServerThread(res);
+    }
+
     if (method === "POST" && url.pathname === "/api/state") {
       return writeState(req, res);
+    }
+
+    if (method === "POST" && url.pathname === "/api/server-thread") {
+      return writeServerThread(req, res);
     }
 
     if (method === "POST" && url.pathname === "/api/restore") {
@@ -114,6 +123,25 @@ function readBackups(res) {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   return sendJson(res, 200, { ok: true, backupsDir, backups });
+}
+
+function readServerThread(res) {
+  if (!fs.existsSync(serverThreadFile)) {
+    return sendJson(res, 200, {
+      ok: true,
+      exists: false,
+      serverThreadFile,
+      data: { messages: [] }
+    });
+  }
+
+  const data = JSON.parse(fs.readFileSync(serverThreadFile, "utf8"));
+  return sendJson(res, 200, {
+    ok: true,
+    exists: true,
+    serverThreadFile,
+    data
+  });
 }
 
 async function restoreBackup(req, res) {
@@ -178,6 +206,23 @@ async function writeState(req, res) {
     ok: true,
     dataFile,
     backupFile
+  });
+}
+
+async function writeServerThread(req, res) {
+  const raw = await readBody(req);
+  const data = JSON.parse(raw);
+  const thread = {
+    app: "BubblePath",
+    kind: "server-thread",
+    savedAt: new Date().toISOString(),
+    messages: Array.isArray(data.messages) ? data.messages : []
+  };
+  fs.writeFileSync(serverThreadFile, `${JSON.stringify(thread, null, 2)}\n`);
+
+  return sendJson(res, 200, {
+    ok: true,
+    serverThreadFile
   });
 }
 

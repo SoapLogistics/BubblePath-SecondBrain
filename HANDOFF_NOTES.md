@@ -20,6 +20,7 @@ Last updated: 2026-04-25
   - a more phone-friendly responsive layout for the first browser-client pass
   - a `package.json` with `start` / `start:network` scripts, and `server.js` now respects `HOST`, so the browser client can move onto the Ubox more cleanly
   - a first `Bubble Server` conversation lane with its own saved thread, selected-bubble context card, and GPT-backed browser chat surface so the page can start becoming the place we talk rather than only a capture/map tool
+  - Bubble Server conversation state now also has a real server-backed path in `bubblepath-vault/bubblepath-server-thread.json`, with browser fallback only when the Soap Server API is unavailable
 - Native Mac BubblePath scaffold with:
   - a local launchable app bundle path at `dist/BubblePath.app`
   - a double-click launcher at `Launch BubblePath.command`
