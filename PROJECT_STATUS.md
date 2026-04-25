@@ -1,11 +1,12 @@
 # BubblePath Project Status
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25
 
 ## What Exists Now
 
 - Noon checkpoint summary in `NOON_CHECKPOINT.md`
 - Browser prototype at `http://127.0.0.1:5173`
+- Browser prototype now also has a visible Browser Client status card, a more phone-friendly responsive layout, and a `package.json` with `start` / `start:network` scripts so it can move onto the Ubox more cleanly
 - Local vault server in `server.js`
 - Disk vault folder at `bubblepath-vault/`
 - Latest data file at `bubblepath-vault/bubblepath-data.json`
@@ -29,6 +30,7 @@ Last updated: 2026-04-24
 - Native Mac detail panel now includes a visible duplicate button alongside delete and close controls
 - Native Mac app now supports arrow-key nudging for the selected bubble on the canvas
 - Native Mac app now supports Command-[ and Command-] to step through bubble selection from the keyboard
+- Native Mac app now also supports Option-Command-[ and Option-Command-] to move backward and forward through selection history, with contextual Navigate menu labels for the destination bubble
 - Native Mac app now lets Escape clear an active search when no bubble is selected
 - Native Mac utility panel now includes a visible New Bubble action alongside capture/import/export controls
 - Native Mac utility panel now includes a visible Clear Search action whenever the canvas is filtered
@@ -186,6 +188,10 @@ Last updated: 2026-04-24
 - Workspace now also includes `TERMIUS_QUICK_CONNECT.md`, and the Mac utility panel now exposes `Termius` / `Copy Termius` actions for it
 - Workspace now also includes `SERVER_COMMANDS.md`, and the Mac utility panel now exposes `Server Cmds` / `Copy Cmds` actions for it
 - The Mac utility panel `Prep Set` now also includes `SERVER_COMMANDS.md`, alongside the server guide, phone plan, and Termius quick-connect guide
+- Workspace now also includes `GITHUB_QUICK_START.md`, and the Mac utility panel now exposes `GitHub` / `Copy GitHub` actions for it
+- BubblePath’s GitHub repo is now cloned onto the Ubuntu helper box at `/srv/bubblepath/repos/bubblepath`, and the server now has `bubblepath-repo-status` / `bp-repo` to inspect that clone
+- The Toshiba USB drive on the Ubuntu helper box has now been reformatted as `ext4`, labeled `toshiba_server`, mounted persistently at `/srv/storage/toshiba`, and seeded with `BubblePath`, `Backups`, and `Archive` folders for larger server-side storage
+- The Ubuntu helper box now also has `bubblepath-toshiba-status` with a matching `bp-toshiba` alias, and `bubblepath-session-start` plus the server welcome note now include the Toshiba storage lane in the normal one-command server-home view
 - iCloud architecture plan in `icloud-sync-plan.md`
 - Native Mac roadmap in `mac-app-roadmap.md`
 

@@ -1,6 +1,6 @@
 # BubblePath Handoff Notes
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25
 
 ## Built
 
@@ -16,6 +16,9 @@ Last updated: 2026-04-24
   - visible backup policy details
   - clear labels for regular backups vs pre-restore snapshots
   - retention caps for regular backups and pre-restore backups
+  - a visible Browser Client status card so the page itself says where it is running and whether it is local-only or network-visible
+  - a more phone-friendly responsive layout for the first browser-client pass
+  - a `package.json` with `start` / `start:network` scripts, and `server.js` now respects `HOST`, so the browser client can move onto the Ubox more cleanly
 - Native Mac BubblePath scaffold with:
   - a local launchable app bundle path at `dist/BubblePath.app`
   - a double-click launcher at `Launch BubblePath.command`
@@ -35,6 +38,7 @@ Last updated: 2026-04-24
   - the detail-panel close button now uses the same autosaved selection-clearing path as Escape
   - arrow keys now nudge the selected bubble on the canvas
   - Command-[ and Command-] now step backward and forward through bubble selection
+  - Option-Command-[ and Option-Command-] now move backward and forward through real selection history, with contextual Navigate menu labels for the destination bubble
   - Escape now also clears an active search when no bubble is selected
   - the utility panel now has a visible New Bubble action
   - the utility panel now shows a Clear Search action whenever search is active
@@ -321,6 +325,10 @@ Last updated: 2026-04-24
 - Added `TERMIUS_QUICK_CONNECT.md` so the phone-server reconnect details are one click away, and the Mac utility panel now exposes `Termius` / `Copy Termius` actions for it too
 - Added `SERVER_COMMANDS.md` so the server-home command set is one click away too, and the Mac utility panel now exposes `Server Cmds` / `Copy Cmds` actions for it
 - `Prep Set` now also carries `SERVER_COMMANDS.md`, so the server guide, phone plan, Termius guide, and server-command cheat sheet stay bundled together in one reveal action
+- Added `GITHUB_QUICK_START.md` so the new repo/upstream path is one click away too, and the Mac utility panel now exposes `GitHub` / `Copy GitHub` actions for it
+- BubblePath’s GitHub repo is now cloned onto the Ubuntu helper box at `/srv/bubblepath/repos/bubblepath`, and the server now has `bubblepath-repo-status` / `bp-repo` to inspect that clone
+- The Toshiba USB drive on the Ubuntu helper box has now been reformatted as `ext4`, labeled `toshiba_server`, mounted persistently at `/srv/storage/toshiba`, and seeded with `BubblePath`, `Backups`, and `Archive` folders for larger server-side storage
+- The Ubuntu helper box now also has `bubblepath-toshiba-status` with a matching `bp-toshiba` alias, and `bubblepath-session-start` plus the server welcome note now include the Toshiba storage lane in the normal one-command server-home view
 - Native iPhone scaffold builds with `swift build`
 
 ## Important Files

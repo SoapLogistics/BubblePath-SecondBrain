@@ -1,0 +1,10 @@
+{
+  "name": "bubblepath-browser-client",
+  "private": true,
+  "version": "0.1.0",
+  "description": "BubblePath browser client and local vault server",
+  "scripts": {
+    "start": "node server.js",
+    "start:network": "HOST=0.0.0.0 node server.js"
+  }
+}

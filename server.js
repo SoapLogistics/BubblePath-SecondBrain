@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = __dirname;
+const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 5173);
 const vaultDir = path.join(root, "bubblepath-vault");
 const backupsDir = path.join(vaultDir, "backups");
@@ -72,8 +73,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`BubblePath vault server running at http://127.0.0.1:${port}`);
+server.listen(port, host, () => {
+  console.log(`BubblePath vault server running at http://${host}:${port}`);
   console.log(`Vault: ${vaultDir}`);
 });
 

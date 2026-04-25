@@ -109,7 +109,10 @@ const elements = {
   vaultBannerText: document.querySelector("#vault-banner-text"),
   backupSummary: document.querySelector("#backup-summary"),
   backupList: document.querySelector("#backup-list"),
-  saveToast: document.querySelector("#save-toast")
+  saveToast: document.querySelector("#save-toast"),
+  clientOrigin: document.querySelector("#client-origin"),
+  clientReach: document.querySelector("#client-reach"),
+  clientHome: document.querySelector("#client-home")
 };
 
 hydrateSettings();
@@ -355,6 +358,7 @@ window.addEventListener("pointerup", () => {
 });
 
 function render(options = {}) {
+  renderClientSurface();
   elements.count.textContent = state.bubbles.length;
   elements.vaultStatus.textContent = vaultAvailable ? "Vault on" : "Browser";
   elements.vaultMode.textContent = vaultAvailable ? "Disk vault active" : "Browser fallback";
@@ -369,6 +373,21 @@ function render(options = {}) {
   renderMap();
   renderDetail(options);
   renderBackups();
+}
+
+function renderClientSurface() {
+  const origin = window.location.origin;
+  const hostname = window.location.hostname;
+  const isLocalOnly = ["127.0.0.1", "localhost"].includes(hostname);
+  const isNetworkHost = !isLocalOnly && Boolean(hostname);
+
+  elements.clientOrigin.textContent = origin;
+  elements.clientReach.textContent = isLocalOnly
+    ? "This run is local to this machine right now. Put the server on the Ubox to reach it from your phone too."
+    : `This run is network-visible at ${origin}, so your Mac and phone can use the same browser surface while the server stays up.`;
+  elements.clientHome.textContent = isNetworkHost
+    ? "This page is already running from a shared host, which is the right shape for the future Ubox-first setup."
+    : "Next step: run this browser client on the Ubox with the network start mode so the page can become the shared front door.";
 }
 
 function renderList() {
