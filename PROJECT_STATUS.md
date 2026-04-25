@@ -9,6 +9,7 @@ Last updated: 2026-04-25
 - Browser prototype now also has a visible Browser Client status card, a more phone-friendly responsive layout, and a `package.json` with `start` / `start:network` scripts so it can move onto the Ubox more cleanly
 - Browser prototype now also has a first `Bubble Server` conversation lane with its own saved thread, selected-bubble context card, and shared GPT-backed chat surface so the page can start becoming the place we talk rather than only a capture/map tool
 - Bubble Server conversation state now also has a real server-backed path in `bubblepath-vault/bubblepath-server-thread.json`, with browser fallback only when the Soap Server API is unavailable
+- Bubble Server now also polls and rehydrates its server-backed thread when Soap Server is available, so the shared conversation can stay more in sync across multiple devices
 - Local vault server in `server.js`
 - Disk vault folder at `bubblepath-vault/`
 - Latest data file at `bubblepath-vault/bubblepath-data.json`

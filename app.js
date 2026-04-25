@@ -58,6 +58,8 @@ let vaultAvailable = false;
 let vaultDirty = true;
 let serverThreadAvailable = false;
 let serverThreadDirty = false;
+let serverThreadSyncAt = "";
+let serverThreadSyncTimer = null;
 let vaultInfo = {
   dataFile: "",
   backupFile: "",
@@ -134,6 +136,11 @@ setInterval(() => {
   if (vaultAvailable && vaultDirty) saveVaultNow();
   if (serverThreadAvailable && serverThreadDirty) saveServerThreadNow();
 }, 10000);
+serverThreadSyncTimer = setInterval(() => {
+  if (serverThreadAvailable && !serverThreadDirty) {
+    loadServerThreadFromServerWithOptions({ silent: true });
+  }
+}, 5000);
 
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -446,11 +453,12 @@ function render(options = {}) {
 
 function renderServerThread() {
   const bubble = getSelected();
-  elements.serverCount.textContent = serverThread.messages.filter((message) => !message.pending).length;
+  const messageCount = serverThread.messages.filter((message) => !message.pending).length;
+  elements.serverCount.textContent = serverThreadAvailable ? `${messageCount} live` : `${messageCount} local`;
   elements.serverSubtitle.textContent = bubble
-    ? `Talk inside the world of the selected bubble, not outside it.${serverThreadAvailable ? " This thread is now living on Soap Server." : ""}`
+    ? `Talk inside the world of the selected bubble, not outside it.${serverThreadAvailable ? ` This thread is now living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.` : ""}`
     : serverThreadAvailable
-      ? "A shared conversation surface living on Soap Server."
+      ? `A shared conversation surface living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.`
       : "A shared conversation surface for the future Ubox-first setup.";
   elements.serverContext.textContent = bubble
     ? `${bubble.type}: ${shorten(bubble.content, 120)}`
@@ -946,6 +954,10 @@ function scheduleServerThreadSave() {
 }
 
 async function loadServerThreadFromServer() {
+  return loadServerThreadFromServerWithOptions({});
+}
+
+async function loadServerThreadFromServerWithOptions(options = {}) {
   try {
     const response = await fetch("/api/server-thread");
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
@@ -953,16 +965,24 @@ async function loadServerThreadFromServer() {
     if (!payload.ok) throw new Error(payload.error || "Server thread load failed.");
 
     serverThreadAvailable = true;
+    serverThreadSyncAt = payload.data?.savedAt || new Date().toISOString();
     if (Array.isArray(payload.data?.messages) && payload.data.messages.length) {
-      serverThread = {
+      const nextThread = {
         messages: payload.data.messages.map((message) => ({
           ...message,
           role: message.role || "assistant"
         }))
       };
-      localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
-      serverThreadDirty = false;
-      render();
+
+      if (!sameServerThreadMessages(serverThread.messages, nextThread.messages)) {
+        serverThread = nextThread;
+        localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
+        serverThreadDirty = false;
+        render();
+        return;
+      }
+
+      if (!options.silent) render();
       return;
     }
 
@@ -971,10 +991,10 @@ async function loadServerThreadFromServer() {
       return;
     }
 
-    render();
+    if (!options.silent) render();
   } catch {
     serverThreadAvailable = false;
-    render();
+    if (!options.silent) render();
   }
 }
 
@@ -992,6 +1012,7 @@ async function saveServerThreadNow() {
 
     serverThreadAvailable = true;
     serverThreadDirty = false;
+    serverThreadSyncAt = new Date().toISOString();
     render();
     return { ok: true, ...result };
   } catch (error) {
@@ -1062,6 +1083,10 @@ function loadServerThread() {
       messages: []
     };
   }
+}
+
+function sameServerThreadMessages(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function hydrateSettings() {
