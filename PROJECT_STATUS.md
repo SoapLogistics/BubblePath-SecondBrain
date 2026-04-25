@@ -429,6 +429,7 @@ The iPhone scaffold has:
 - Bubble Server’s shared server-thread envelope now also carries ingested source documents plus a selected-source pointer, so uploaded reading context can travel across Mac and phone instead of staying stranded in one tab
 - Soap Server now has `poppler-utils` and `pandoc` installed so the browser client can actually extract text from uploaded PDFs and EPUBs instead of only pretending to support them
 - The new document-intake endpoint has been verified against a real Ubuntu PDF and a live Ubuntu documentation web page, and both returned extracted text successfully through the live Soap Server at `http://192.168.4.78:5173`
+- The private Codex/chat lane inside the web app is now named `Soap Bubbles`, so the page language is starting to match the product identity instead of reading like a temporary developer placeholder
 
 The scaffold compiles with Apple Swift 6.1.2 after installing Xcode Command Line Tools.
 

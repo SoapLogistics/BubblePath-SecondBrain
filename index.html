@@ -2,8 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#254d3c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BubblePath">
     <title>BubblePath</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon.svg">
     <link rel="stylesheet" href="styles.css?v=20260420-1816">
   </head>
   <body>
@@ -30,6 +37,10 @@
           <div>
             <strong>Home</strong>
             <span id="client-home">This surface is meant to grow into the Mac-and-phone client while the heavier work lives on the Ubox.</span>
+          </div>
+          <div>
+            <strong>Install</strong>
+            <span id="client-install">Checking whether this can behave more like an app on your phone.</span>
           </div>
         </div>
 
@@ -121,11 +132,11 @@
       </section>
 
       <aside class="detail-panel" aria-label="Selected bubble">
-        <section class="server-panel" aria-label="Bubble Server conversation">
+        <section class="server-panel" aria-label="Soap Bubbles conversation">
           <div class="section-title">
             <div>
-              <h2>Bubble Server</h2>
-              <p id="server-subtitle">A shared conversation surface for the future Ubox-first setup.</p>
+              <h2>Soap Bubbles</h2>
+              <p id="server-subtitle">A private shared thought-and-chat lane living inside Soap Server.</p>
             </div>
             <span id="server-count">0</span>
           </div>
@@ -139,7 +150,7 @@
             <div class="section-title">
               <div>
                 <h3>Source Intake</h3>
-                <p id="server-docs-subtitle">Bring in web pages, PDFs, and EPUBs so Soap Server can read with you.</p>
+                <p id="server-docs-subtitle">Bring in web pages, PDFs, and EPUBs so Soap Bubbles can think with them.</p>
               </div>
               <span id="server-doc-count">0</span>
             </div>
@@ -168,10 +179,10 @@
           <div id="server-messages" class="server-messages"></div>
 
           <form id="server-form" class="server-form">
-            <div id="server-compose-status" class="server-compose-status">Bubble Server is checking in with Soap Server...</div>
-            <textarea id="server-input" rows="4" placeholder="Talk to Bubble Server..."></textarea>
+            <div id="server-compose-status" class="server-compose-status">Soap Bubbles is checking in with Soap Server...</div>
+            <textarea id="server-input" rows="4" placeholder="Talk to Soap Bubbles..."></textarea>
             <div class="server-actions">
-              <button type="button" id="server-use-selected" class="secondary">Use Selected Bubble</button>
+              <button type="button" id="server-use-selected" class="secondary">Use Thinking Bubble</button>
               <button type="submit" id="server-send">Send</button>
             </div>
           </form>

@@ -74,6 +74,7 @@ let vaultInfo = {
 };
 let backups = [];
 let toastTimer = null;
+let deferredInstallPrompt = null;
 
 const elements = {
   form: document.querySelector("#bubble-form"),
@@ -121,6 +122,7 @@ const elements = {
   clientOrigin: document.querySelector("#client-origin"),
   clientReach: document.querySelector("#client-reach"),
   clientHome: document.querySelector("#client-home"),
+  clientInstall: document.querySelector("#client-install"),
   serverSubtitle: document.querySelector("#server-subtitle"),
   serverCount: document.querySelector("#server-count"),
   serverContext: document.querySelector("#server-context"),
@@ -146,6 +148,7 @@ const elements = {
 hydrateSettings();
 render();
 loadVaultState();
+registerServiceWorker();
 setInterval(() => {
   if (vaultAvailable && vaultDirty) saveVaultNow();
   if (serverThreadAvailable && serverThreadDirty) saveServerThreadNow();
@@ -155,6 +158,12 @@ serverThreadSyncTimer = setInterval(() => {
     loadServerThreadFromServerWithOptions({ silent: true });
   }
 }, 5000);
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  render();
+});
 
 elements.serverInput.addEventListener("input", () => {
   serverThread.draft = elements.serverInput.value;
@@ -349,8 +358,8 @@ elements.serverForm.addEventListener("submit", async (event) => {
     id: crypto.randomUUID(),
     role: "assistant",
     text: settings.apiKey
-      ? "Listening from the Bubble Server..."
-      : "Add your OpenAI API key under Your GPT first so Bubble Server can answer back.",
+      ? "Listening from Soap Bubbles..."
+      : "Add your OpenAI API key under Your GPT first so Soap Bubbles can answer back.",
     createdAt: new Date().toISOString(),
     pending: Boolean(settings.apiKey)
   };
@@ -364,7 +373,7 @@ elements.serverForm.addEventListener("submit", async (event) => {
     const answer = await askOpenAI(buildServerInput(text));
     pendingMessage.text = answer || "I did not get text back. Try again in a moment.";
   } catch (error) {
-    pendingMessage.text = `Bubble Server request failed: ${error.message}`;
+    pendingMessage.text = `Soap Bubbles request failed: ${error.message}`;
   } finally {
     pendingMessage.pending = false;
     pendingMessage.createdAt = new Date().toISOString();
@@ -519,20 +528,20 @@ function renderServerThread() {
   const latestWaitingMessage = waitingMessages.at(-1) || null;
   elements.serverCount.textContent = serverThreadAvailable ? `${messageCount} live` : `${messageCount} local`;
   elements.serverSubtitle.textContent = bubble
-    ? `Talk inside the world of the selected bubble, not outside it.${serverThreadAvailable ? ` This thread is now living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.` : ""}`
+    ? `Talk inside the world of the selected thinking bubble, not outside it.${serverThreadAvailable ? ` This lane is now living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.` : ""}`
     : serverThreadAvailable
-      ? `A shared conversation surface living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.`
-      : "A shared conversation surface for the future Ubox-first setup.";
+      ? `A private Soap Bubbles lane living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.`
+      : "A private Soap Bubbles lane for the future Ubox-first setup.";
   elements.serverContext.textContent = bubble
     ? `${bubble.type}: ${shorten(bubble.content, 120)}`
     : "No bubble is in focus yet. Pick one to let the conversation lean on it.";
   elements.serverDocCount.textContent = `${serverThread.documents.length}`;
   elements.serverDocSubtitle.textContent = selectedDocument
     ? `Selected source: ${shorten(selectedDocument.title, 54)}`
-    : "Bring in web pages, PDFs, and EPUBs so Soap Server can read with you.";
+    : "Bring in web pages, PDFs, and EPUBs so Soap Bubbles can read with you.";
   elements.serverDocStatus.textContent = serverThreadAvailable
     ? "Soap Server can extract and share sources here across your Mac and phone."
-    : "Document intake needs Soap Server to be live. Browser fallback keeps the chat, but not the extraction.";
+    : "Document intake needs Soap Server to be live. Browser fallback keeps Soap Bubbles, but not the extraction.";
   elements.serverUrlIngest.disabled = !serverThreadAvailable;
   elements.serverFileInput.disabled = !serverThreadAvailable;
   elements.serverUseSelected.disabled = !bubble;
@@ -543,9 +552,9 @@ function renderServerThread() {
     : "Soap Server unavailable · browser fallback";
   elements.serverLiveChip.className = `server-live-chip${serverThreadAvailable ? " live" : ""}`;
   elements.serverComposeStatus.textContent = serverThreadAvailable
-    ? "Messages you send here are going to the shared Soap Server thread."
-    : "Soap Server is unavailable right now, so this page is falling back to local browser state until the server comes back.";
-  elements.serverSend.textContent = serverThreadAvailable ? "Send to Soap Server" : "Send Locally";
+    ? "Messages you send here are going to the shared Soap Bubbles thread on Soap Server."
+    : "Soap Server is unavailable right now, so this page is falling back to local Soap Bubbles state until the server comes back.";
+  elements.serverSend.textContent = serverThreadAvailable ? "Send to Soap Bubbles" : "Send Locally";
   if (document.activeElement !== elements.serverInput && elements.serverInput.value !== (serverThread.draft || "")) {
     elements.serverInput.value = serverThread.draft || "";
   }
@@ -559,7 +568,7 @@ function renderServerThread() {
   serverThread.messages.forEach((message) => {
     const item = document.createElement("div");
     item.className = `server-message ${message.role}${message.pending ? " pending" : ""}${message.needsUser ? " needs-user" : ""}`;
-    item.innerHTML = `<strong>${message.role === "assistant" ? "Bubble Server" : "You"}</strong>${escapeHtml(message.text)}<time>${formatDate(message.createdAt)}</time>`;
+    item.innerHTML = `<strong>${message.role === "assistant" ? "Soap Bubbles" : "You"}</strong>${escapeHtml(message.text)}<time>${formatDate(message.createdAt)}</time>`;
     elements.serverMessages.append(item);
   });
 }
@@ -600,6 +609,8 @@ function renderClientSurface() {
   const hostname = window.location.hostname;
   const isLocalOnly = ["127.0.0.1", "localhost"].includes(hostname);
   const isNetworkHost = !isLocalOnly && Boolean(hostname);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const isiPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   elements.clientOrigin.textContent = origin;
   elements.clientReach.textContent = isLocalOnly
@@ -608,6 +619,13 @@ function renderClientSurface() {
   elements.clientHome.textContent = isNetworkHost
     ? "This page is already running from a shared host, which is the right shape for the future Ubox-first setup."
     : "Next step: run this browser client on the Ubox with the network start mode so the page can become the shared front door.";
+  elements.clientInstall.textContent = isStandalone
+    ? "BubblePath is already running like an installed app on this device."
+    : deferredInstallPrompt
+      ? "This device can install BubblePath like an app from the browser."
+      : isiPhone
+        ? "On iPhone, use Share and then Add to Home Screen so BubblePath feels more like a real app."
+        : "Install support depends on the browser, but this page is now set up to behave more like an app.";
 }
 
 function renderList() {
@@ -826,7 +844,7 @@ function buildServerInput(text) {
     {
       role: "user",
       content: [
-        "You are replying inside Bubble Server, a browser-based BubblePath conversation lane.",
+        "You are replying inside Soap Bubbles, a browser-based BubblePath conversation lane.",
         "Stay warm, grounded, and useful.",
         "When a selected bubble exists, treat it as the live thought-space context.",
         "When a selected source exists, treat it as live reading context you can quote and reason from.",
@@ -1196,7 +1214,7 @@ function loadServerThread() {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          text: "Welcome to Bubble Server. This is the first pass at making BubblePath feel like a place where we can actually talk inside the thought-space.",
+          text: "Welcome to Soap Bubbles. This is the first pass at making BubblePath feel like a place where we can actually think and talk inside the same thought-space.",
           createdAt: new Date().toISOString()
         }
       ],
@@ -1314,7 +1332,7 @@ function commitIngestedDocument(documentRecord) {
   serverThread.messages.push({
     id: crypto.randomUUID(),
     role: "assistant",
-    text: `Loaded ${documentRecord.sourceType} source "${documentRecord.title}" into Soap Server. You can ask me about it now, and that source will travel with the shared thread.`,
+    text: `Loaded ${documentRecord.sourceType} source "${documentRecord.title}" into Soap Bubbles. You can ask me about it now, and that source will travel with the shared thread.`,
     createdAt: new Date().toISOString()
   });
   saveServerThread();
@@ -1338,6 +1356,11 @@ function hydrateSettings() {
   elements.apiKey.value = settings.apiKey || "";
   elements.modelName.value = settings.model || "gpt-5.2";
   elements.guidePrompt.value = settings.guidePrompt || defaultGuidePrompt;
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("/service-worker.js").catch(() => {});
 }
 
 function normalizeBubbles(bubbles) {

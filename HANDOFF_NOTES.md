@@ -340,6 +340,7 @@ Last updated: 2026-04-25
 - Bubble Server now has a first server-backed source-intake lane in the page itself, with PDF/EPUB/text/HTML upload plus URL fetch feeding a new Soap Server `/api/ingest-document` endpoint
 - The shared Bubble Server thread envelope now also stores ingested source documents and a selected-document pointer, so reading context can persist across phone and Mac instead of living in one browser tab
 - Soap Server now has `poppler-utils` and `pandoc` installed for real PDF/EPUB extraction, and the live endpoint has been verified with a real Ubuntu PDF plus a live Ubuntu documentation page
+- The private Codex/chat lane inside the web app is now being renamed around `Soap Bubbles`, so the product language is moving toward your actual private workflow instead of staying stuck on `Bubble Server` scaffolding
 - Native iPhone scaffold builds with `swift build`
 
 ## Important Files
