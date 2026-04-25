@@ -190,7 +190,6 @@ syncMobileViewFromHash();
 primeNotificationState();
 render();
 loadVaultState();
-loadAccessInfo();
 registerServiceWorker();
 setInterval(() => {
   if (vaultAvailable && vaultDirty) saveVaultNow();
@@ -734,19 +733,6 @@ function renderClientSurface() {
       : "Turn On Alerts";
 }
 
-async function loadAccessInfo() {
-  try {
-    const response = await fetch("/api/access");
-    if (!response.ok) return;
-    const payload = await response.json();
-    if (!payload.ok || !payload.access) return;
-    accessInfo = payload.access;
-    render();
-  } catch {
-    // Keep the client card usable even if access introspection is unavailable.
-  }
-}
-
 function renderList() {
   elements.list.innerHTML = "";
   state.bubbles.forEach((bubble) => {
@@ -1115,6 +1101,7 @@ async function refreshHealth() {
     const payload = await response.json();
     if (!payload.ok) return;
     vaultAvailable = true;
+    accessInfo = payload.access || accessInfo;
     vaultInfo.dataFile = payload.dataFile || vaultInfo.dataFile;
     vaultInfo.maxRegularBackups = payload.backupPolicy?.maxRegularBackups || 0;
     vaultInfo.maxPreRestoreBackups = payload.backupPolicy?.maxPreRestoreBackups || 0;

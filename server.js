@@ -40,6 +40,7 @@ const server = http.createServer(async (req, res) => {
         vaultDir,
         dataFile,
         hasData: fs.existsSync(dataFile),
+        access: getAccessInfo(),
         backupPolicy: {
           minBackupIntervalMs,
           maxRegularBackups,
@@ -50,13 +51,6 @@ const server = http.createServer(async (req, res) => {
           regular: backups.filter((entry) => !entry.isPreRestore).length,
           preRestore: backups.filter((entry) => entry.isPreRestore).length
         }
-      });
-    }
-
-    if (method === "GET" && url.pathname === "/api/access") {
-      return sendJson(res, 200, {
-        ok: true,
-        access: getAccessInfo()
       });
     }
 
