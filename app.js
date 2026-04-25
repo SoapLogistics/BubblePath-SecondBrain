@@ -123,10 +123,12 @@ const elements = {
   serverSubtitle: document.querySelector("#server-subtitle"),
   serverCount: document.querySelector("#server-count"),
   serverContext: document.querySelector("#server-context"),
+  serverLiveChip: document.querySelector("#server-live-chip"),
   serverMessages: document.querySelector("#server-messages"),
   serverForm: document.querySelector("#server-form"),
   serverInput: document.querySelector("#server-input"),
-  serverUseSelected: document.querySelector("#server-use-selected")
+  serverUseSelected: document.querySelector("#server-use-selected"),
+  serverRefresh: document.querySelector("#server-refresh")
 };
 
 hydrateSettings();
@@ -270,6 +272,15 @@ elements.serverUseSelected.addEventListener("click", () => {
     ? `${elements.serverInput.value.trim()}\n\n${intro}`
     : intro;
   elements.serverInput.focus();
+});
+
+elements.serverRefresh.addEventListener("click", async () => {
+  elements.serverRefresh.disabled = true;
+  try {
+    await loadServerThreadFromServerWithOptions({});
+  } finally {
+    elements.serverRefresh.disabled = false;
+  }
 });
 
 elements.serverForm.addEventListener("submit", async (event) => {
@@ -464,6 +475,12 @@ function renderServerThread() {
     ? `${bubble.type}: ${shorten(bubble.content, 120)}`
     : "No bubble is in focus yet. Pick one to let the conversation lean on it.";
   elements.serverUseSelected.disabled = !bubble;
+  elements.serverLiveChip.textContent = serverThreadAvailable
+    ? serverThreadSyncAt
+      ? `Soap Server live · synced ${formatTime(serverThreadSyncAt)}`
+      : "Soap Server live"
+    : "Soap Server unavailable · browser fallback";
+  elements.serverLiveChip.className = `server-live-chip${serverThreadAvailable ? " live" : ""}`;
 
   elements.serverMessages.innerHTML = "";
   serverThread.messages.forEach((message) => {

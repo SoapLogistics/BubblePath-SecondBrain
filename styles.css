@@ -569,6 +569,32 @@ select {
   overflow-wrap: anywhere;
 }
 
+.server-live-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.server-live-chip {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: var(--muted);
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.server-live-chip.live {
+  border-color: rgba(37, 77, 60, 0.24);
+  background: #eef7ed;
+  color: var(--pine);
+}
+
 .server-messages {
   display: grid;
   gap: 8px;
