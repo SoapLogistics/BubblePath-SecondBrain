@@ -15,7 +15,7 @@ This folder holds the live-service plumbing for the BubblePath web app.
 
 ## Current intended shape
 
-- BubblePath Node app listens on `127.0.0.1:5173`
+- BubblePath Node app listens on `0.0.0.0:5173` for now so direct LAN testing keeps working
 - Tailscale Serve can expose that securely inside the tailnet
 - nginx can later proxy `80/443` to `127.0.0.1:5173`
 

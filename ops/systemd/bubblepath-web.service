@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/srv/bubblepath/repos/bubblepath
-Environment=HOST=127.0.0.1
+Environment=HOST=0.0.0.0
 Environment=PORT=5173
 ExecStart=/usr/bin/node /srv/bubblepath/repos/bubblepath/server.js
 Restart=always
