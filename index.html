@@ -11,12 +11,17 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icon.svg">
-    <link rel="stylesheet" href="styles.css?v=20260420-1816">
+    <link rel="stylesheet" href="styles.css?v=20260425-2130">
   </head>
   <body>
     <div id="save-toast" class="save-toast hidden" role="status" aria-live="polite">Saved to this Mac</div>
+    <nav class="mobile-nav" aria-label="BubblePath mobile views">
+      <button type="button" class="mobile-nav-button active" data-mobile-view="soap">Soap Bubbles</button>
+      <button type="button" class="mobile-nav-button" data-mobile-view="capture">Capture</button>
+      <button type="button" class="mobile-nav-button" data-mobile-view="path">Path</button>
+    </nav>
     <main class="shell">
-      <section class="capture-panel" aria-label="Capture thought">
+      <section class="capture-panel" aria-label="Capture thought" data-mobile-panel="capture">
         <div class="brand-row">
           <div class="mark" aria-hidden="true">BP</div>
           <div>
@@ -26,6 +31,12 @@
         </div>
 
         <div class="client-card">
+          <div class="client-mode-banner" id="client-mode-banner">
+            This looks like the local preview, not the live Soap Server client.
+          </div>
+          <div class="client-mode-actions" id="client-mode-actions">
+            <a class="client-live-link" id="client-live-link" href="http://192.168.4.78:5173">Open Live Soap Server</a>
+          </div>
           <div>
             <strong>Browser Client</strong>
             <span id="client-origin">Checking where this page is running...</span>
@@ -41,6 +52,14 @@
           <div>
             <strong>Install</strong>
             <span id="client-install">Checking whether this can behave more like an app on your phone.</span>
+          </div>
+          <div>
+            <strong>Notify</strong>
+            <span id="client-notify">Checking whether this browser can alert you when Soap Bubbles needs you.</span>
+          </div>
+          <div class="client-actions">
+            <a class="client-jump" href="#soap-bubbles">Open Soap Bubbles</a>
+            <button type="button" id="notify-permission" class="secondary">Turn On Alerts</button>
           </div>
         </div>
 
@@ -114,7 +133,7 @@
         </div>
       </section>
 
-      <section class="path-panel" aria-label="Bubble path map">
+      <section class="path-panel" aria-label="Bubble path map" data-mobile-panel="path">
         <div class="map-toolbar">
           <div>
             <h2>Path</h2>
@@ -131,8 +150,8 @@
         </div>
       </section>
 
-      <aside class="detail-panel" aria-label="Selected bubble">
-        <section class="server-panel" aria-label="Soap Bubbles conversation">
+      <aside class="detail-panel" aria-label="Selected bubble" data-mobile-panel="soap">
+        <section id="soap-bubbles" class="server-panel" aria-label="Soap Bubbles conversation">
           <div class="section-title">
             <div>
               <h2>Soap Bubbles</h2>
@@ -235,6 +254,6 @@
       </aside>
     </main>
 
-    <script src="app.js?v=20260420-1816"></script>
+    <script src="app.js?v=20260425-2130"></script>
   </body>
 </html>

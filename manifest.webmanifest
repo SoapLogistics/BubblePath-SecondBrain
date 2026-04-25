@@ -1,0 +1,17 @@
+{
+  "name": "BubblePath",
+  "short_name": "BubblePath",
+  "description": "A hybrid BubblePath and messaging client for Soap Server.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f4",
+  "theme_color": "#254d3c",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

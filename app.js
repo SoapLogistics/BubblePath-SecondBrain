@@ -75,8 +75,10 @@ let vaultInfo = {
 let backups = [];
 let toastTimer = null;
 let deferredInstallPrompt = null;
+let mobileView = loadMobileView();
 
 const elements = {
+  mobileNavButtons: Array.from(document.querySelectorAll(".mobile-nav-button")),
   form: document.querySelector("#bubble-form"),
   input: document.querySelector("#bubble-input"),
   type: document.querySelector("#bubble-type"),
@@ -123,6 +125,11 @@ const elements = {
   clientReach: document.querySelector("#client-reach"),
   clientHome: document.querySelector("#client-home"),
   clientInstall: document.querySelector("#client-install"),
+  clientNotify: document.querySelector("#client-notify"),
+  clientModeBanner: document.querySelector("#client-mode-banner"),
+  clientModeActions: document.querySelector("#client-mode-actions"),
+  clientLiveLink: document.querySelector("#client-live-link"),
+  notifyPermission: document.querySelector("#notify-permission"),
   serverSubtitle: document.querySelector("#server-subtitle"),
   serverCount: document.querySelector("#server-count"),
   serverContext: document.querySelector("#server-context"),
@@ -145,7 +152,26 @@ const elements = {
   serverRefresh: document.querySelector("#server-refresh")
 };
 
+elements.mobileNavButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    mobileView = button.dataset.mobileView || "soap";
+    saveMobileView();
+    updateHashForMobileView();
+    render();
+  });
+});
+
+window.addEventListener("hashchange", () => {
+  syncMobileViewFromHash();
+  render();
+});
+
+window.addEventListener("resize", () => {
+  renderMobileView();
+});
+
 hydrateSettings();
+syncMobileViewFromHash();
 render();
 loadVaultState();
 registerServiceWorker();
@@ -162,6 +188,27 @@ serverThreadSyncTimer = setInterval(() => {
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstallPrompt = event;
+  render();
+});
+
+elements.notifyPermission.addEventListener("click", async () => {
+  if (!("Notification" in window)) {
+    render();
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    new Notification("Soap Bubbles is awake", {
+      body: "This device is already allowed to alert you when Soap Server needs you."
+    });
+    return;
+  }
+
+  try {
+    await Notification.requestPermission();
+  } catch {
+    // ignore and let render describe the current state
+  }
   render();
 });
 
@@ -503,6 +550,7 @@ window.addEventListener("pointerup", () => {
 
 function render(options = {}) {
   renderClientSurface();
+  renderMobileView();
   renderServerThread();
   elements.count.textContent = state.bubbles.length;
   elements.vaultStatus.textContent = vaultAvailable ? "Vault on" : "Browser";
@@ -518,6 +566,14 @@ function render(options = {}) {
   renderMap();
   renderDetail(options);
   renderBackups();
+}
+
+function renderMobileView() {
+  const isMobile = window.matchMedia("(max-width: 760px)").matches;
+  document.body.dataset.mobileView = isMobile ? mobileView : "all";
+  elements.mobileNavButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.mobileView === mobileView);
+  });
 }
 
 function renderServerThread() {
@@ -607,16 +663,31 @@ function renderServerDocuments() {
 function renderClientSurface() {
   const origin = window.location.origin;
   const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
   const isLocalOnly = ["127.0.0.1", "localhost"].includes(hostname);
   const isNetworkHost = !isLocalOnly && Boolean(hostname);
+  const isFilePreview = protocol === "file:";
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   const isiPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const notificationSupported = "Notification" in window;
+  const notificationPermission = notificationSupported ? Notification.permission : "unsupported";
+  const liveServerUrl = `http://192.168.4.78:5173`;
 
+  elements.clientModeBanner.hidden = !isFilePreview;
+  elements.clientModeActions.hidden = !isFilePreview;
+  elements.clientLiveLink.href = liveServerUrl;
+  elements.clientModeBanner.textContent = isFilePreview
+    ? "You opened the local BubblePath preview. For real shared Soap Bubbles chat, use the live Soap Server URL instead."
+    : "This page is connected to a real server path.";
   elements.clientOrigin.textContent = origin;
-  elements.clientReach.textContent = isLocalOnly
+  elements.clientReach.textContent = isFilePreview
+    ? "This file preview cannot reach Soap Server APIs, so Soap Bubbles falls back to local browser-only state here."
+    : isLocalOnly
     ? "This run is local to this machine right now. Put the server on the Ubox to reach it from your phone too."
     : `This run is network-visible at ${origin}, so your Mac and phone can use the same browser surface while the server stays up.`;
-  elements.clientHome.textContent = isNetworkHost
+  elements.clientHome.textContent = isFilePreview
+    ? `Use the live Soap Server page at ${liveServerUrl} when you want the real shared chat lane.`
+    : isNetworkHost
     ? "This page is already running from a shared host, which is the right shape for the future Ubox-first setup."
     : "Next step: run this browser client on the Ubox with the network start mode so the page can become the shared front door.";
   elements.clientInstall.textContent = isStandalone
@@ -626,6 +697,19 @@ function renderClientSurface() {
       : isiPhone
         ? "On iPhone, use Share and then Add to Home Screen so BubblePath feels more like a real app."
         : "Install support depends on the browser, but this page is now set up to behave more like an app.";
+  elements.clientNotify.textContent = notificationPermission === "granted"
+    ? "This browser can already alert you when Soap Bubbles needs your attention."
+    : notificationPermission === "denied"
+      ? "Alerts are blocked in this browser right now, so Soap Bubbles cannot nudge you here yet."
+      : notificationSupported
+        ? "This browser can ask for alert permission, which is the first step toward real Soap Bubbles notifications."
+        : "This browser does not expose notification support here, so we will need another tap-on-the-shoulder path.";
+  elements.notifyPermission.disabled = !notificationSupported || notificationPermission === "granted";
+  elements.notifyPermission.textContent = notificationPermission === "granted"
+    ? "Alerts Ready"
+    : notificationPermission === "denied"
+      ? "Alerts Blocked"
+      : "Turn On Alerts";
 }
 
 function renderList() {
@@ -1361,6 +1445,35 @@ function hydrateSettings() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+}
+
+function loadMobileView() {
+  const saved = localStorage.getItem("bubblepath.mobileView");
+  return ["soap", "capture", "path"].includes(saved) ? saved : "soap";
+}
+
+function saveMobileView() {
+  localStorage.setItem("bubblepath.mobileView", mobileView);
+}
+
+function syncMobileViewFromHash() {
+  const hash = window.location.hash.replace("#", "");
+  const nextView = hash === "soap-bubbles"
+    ? "soap"
+    : ["soap", "capture", "path"].includes(hash)
+      ? hash
+      : null;
+  if (nextView) {
+    mobileView = nextView;
+    saveMobileView();
+  }
+}
+
+function updateHashForMobileView() {
+  const nextHash = mobileView === "soap" ? "soap-bubbles" : mobileView;
+  if (window.location.hash.replace("#", "") !== nextHash) {
+    history.replaceState(null, "", `#${nextHash}`);
+  }
 }
 
 function normalizeBubbles(bubbles) {
