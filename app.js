@@ -1,5 +1,6 @@
 const storageKey = "bubblepath.v1";
 const settingsKey = "bubblepath.settings.v1";
+const serverThreadKey = "bubblepath.server.v1";
 const defaultGuidePrompt = [
   "You are the user's BubblePath thinking companion.",
   "Be warm, clear, honest, and grounded.",
@@ -48,6 +49,7 @@ starterBubbles[1].links = [starterBubbles[0].id];
 
 let state = loadState();
 let settings = loadSettings();
+let serverThread = loadServerThread();
 let selectedId = state.selectedId || state.bubbles[0]?.id || null;
 let dragging = null;
 let vaultSaveTimer = null;
@@ -112,7 +114,14 @@ const elements = {
   saveToast: document.querySelector("#save-toast"),
   clientOrigin: document.querySelector("#client-origin"),
   clientReach: document.querySelector("#client-reach"),
-  clientHome: document.querySelector("#client-home")
+  clientHome: document.querySelector("#client-home"),
+  serverSubtitle: document.querySelector("#server-subtitle"),
+  serverCount: document.querySelector("#server-count"),
+  serverContext: document.querySelector("#server-context"),
+  serverMessages: document.querySelector("#server-messages"),
+  serverForm: document.querySelector("#server-form"),
+  serverInput: document.querySelector("#server-input"),
+  serverUseSelected: document.querySelector("#server-use-selected")
 };
 
 hydrateSettings();
@@ -227,7 +236,7 @@ elements.askGpt.addEventListener("click", async () => {
   saveAndRender();
 
   try {
-    const answer = await askOpenAI(bubble);
+    const answer = await askOpenAI(buildModelInput(bubble));
     pendingMessage.text = answer || "I did not get text back. Try again in a moment.";
   } catch (error) {
     pendingMessage.text = `OpenAI request failed: ${error.message}`;
@@ -235,6 +244,61 @@ elements.askGpt.addEventListener("click", async () => {
     pendingMessage.pending = false;
     pendingMessage.createdAt = new Date().toISOString();
     saveAndRender();
+  }
+});
+
+elements.serverUseSelected.addEventListener("click", () => {
+  const bubble = getSelected();
+  if (!bubble) {
+    elements.serverInput.focus();
+    return;
+  }
+
+  const intro = `Stay with this bubble for a minute: ${bubble.content}`;
+  elements.serverInput.value = elements.serverInput.value.trim()
+    ? `${elements.serverInput.value.trim()}\n\n${intro}`
+    : intro;
+  elements.serverInput.focus();
+});
+
+elements.serverForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const text = elements.serverInput.value.trim();
+  if (!text) return;
+
+  serverThread.messages.push({
+    id: crypto.randomUUID(),
+    role: "user",
+    text,
+    createdAt: new Date().toISOString()
+  });
+  elements.serverInput.value = "";
+
+  const pendingMessage = {
+    id: crypto.randomUUID(),
+    role: "assistant",
+    text: settings.apiKey
+      ? "Listening from the Bubble Server..."
+      : "Add your OpenAI API key under Your GPT first so Bubble Server can answer back.",
+    createdAt: new Date().toISOString(),
+    pending: Boolean(settings.apiKey)
+  };
+  serverThread.messages.push(pendingMessage);
+  saveServerThread();
+  render();
+
+  if (!settings.apiKey) return;
+
+  try {
+    const answer = await askOpenAI(buildServerInput(text));
+    pendingMessage.text = answer || "I did not get text back. Try again in a moment.";
+  } catch (error) {
+    pendingMessage.text = `Bubble Server request failed: ${error.message}`;
+  } finally {
+    pendingMessage.pending = false;
+    pendingMessage.createdAt = new Date().toISOString();
+    saveServerThread();
+    render();
   }
 });
 
@@ -359,6 +423,7 @@ window.addEventListener("pointerup", () => {
 
 function render(options = {}) {
   renderClientSurface();
+  renderServerThread();
   elements.count.textContent = state.bubbles.length;
   elements.vaultStatus.textContent = vaultAvailable ? "Vault on" : "Browser";
   elements.vaultMode.textContent = vaultAvailable ? "Disk vault active" : "Browser fallback";
@@ -373,6 +438,26 @@ function render(options = {}) {
   renderMap();
   renderDetail(options);
   renderBackups();
+}
+
+function renderServerThread() {
+  const bubble = getSelected();
+  elements.serverCount.textContent = serverThread.messages.filter((message) => !message.pending).length;
+  elements.serverSubtitle.textContent = bubble
+    ? "Talk inside the world of the selected bubble, not outside it."
+    : "A shared conversation surface for the future Ubox-first setup.";
+  elements.serverContext.textContent = bubble
+    ? `${bubble.type}: ${shorten(bubble.content, 120)}`
+    : "No bubble is in focus yet. Pick one to let the conversation lean on it.";
+  elements.serverUseSelected.disabled = !bubble;
+
+  elements.serverMessages.innerHTML = "";
+  serverThread.messages.forEach((message) => {
+    const item = document.createElement("div");
+    item.className = `server-message ${message.role}${message.pending ? " pending" : ""}`;
+    item.innerHTML = `<strong>${message.role === "assistant" ? "Bubble Server" : "You"}</strong>${escapeHtml(message.text)}<time>${formatDate(message.createdAt)}</time>`;
+    elements.serverMessages.append(item);
+  });
 }
 
 function renderClientSurface() {
@@ -506,11 +591,11 @@ function renderDetail(options = {}) {
   });
 }
 
-async function askOpenAI(bubble) {
+async function askOpenAI(input) {
   const body = {
     model: settings.model || "gpt-5.2",
     instructions: settings.guidePrompt || defaultGuidePrompt,
-    input: buildModelInput(bubble),
+    input,
     truncation: "auto"
   };
 
@@ -559,6 +644,54 @@ function buildModelInput(bubble) {
       content: `Use this BubblePath context while answering.\n\n${context}`
     },
     ...conversation
+  ];
+}
+
+function buildServerInput(text) {
+  const selectedBubble = getSelected();
+  const recentBubbleContext = state.bubbles
+    .slice(0, 5)
+    .map((bubble) => `- ${bubble.type}: ${bubble.content}`)
+    .join("\n");
+  const selectedContext = selectedBubble
+    ? [
+        `Selected bubble type: ${selectedBubble.type}`,
+        `Selected bubble content: ${selectedBubble.content}`,
+        selectedBubble.links.length
+          ? `Selected bubble links:\n${selectedBubble.links
+              .map((id) => state.bubbles.find((bubble) => bubble.id === id))
+              .filter(Boolean)
+              .map((bubble) => `- ${bubble.type}: ${bubble.content}`)
+              .join("\n")}`
+          : "Selected bubble links: none yet"
+      ].join("\n\n")
+    : "Selected bubble: none";
+
+  const transcript = serverThread.messages
+    .filter((message) => ["user", "assistant"].includes(message.role))
+    .filter((message) => !message.pending)
+    .slice(-10)
+    .map((message) => ({
+      role: message.role,
+      content: message.text
+    }));
+
+  return [
+    {
+      role: "user",
+      content: [
+        "You are replying inside Bubble Server, a browser-based BubblePath conversation lane.",
+        "Stay warm, grounded, and useful.",
+        "When a selected bubble exists, treat it as the live thought-space context.",
+        "",
+        selectedContext,
+        "",
+        `Recent bubbles:\n${recentBubbleContext || "- none yet"}`,
+        "",
+        `Latest user message: ${text}`
+      ].join("\n")
+    },
+    ...transcript
   ];
 }
 
@@ -790,6 +923,10 @@ function saveSettings() {
   localStorage.setItem(settingsKey, JSON.stringify(settings));
 }
 
+function saveServerThread() {
+  localStorage.setItem(serverThreadKey, JSON.stringify(serverThread));
+}
+
 function loadState() {
   const saved = localStorage.getItem(storageKey);
   if (!saved) return { bubbles: starterBubbles, selectedId: starterBubbles[0].id };
@@ -818,6 +955,38 @@ function loadSettings() {
     };
   } catch {
     return { apiKey: "", model: "gpt-5.2", guidePrompt: defaultGuidePrompt };
+  }
+}
+
+function loadServerThread() {
+  const saved = localStorage.getItem(serverThreadKey);
+  if (!saved) {
+    return {
+      messages: [
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: "Welcome to Bubble Server. This is the first pass at making BubblePath feel like a place where we can actually talk inside the thought-space.",
+          createdAt: new Date().toISOString()
+        }
+      ]
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(saved);
+    return {
+      messages: Array.isArray(parsed.messages)
+        ? parsed.messages.map((message) => ({
+            ...message,
+            role: message.role || "assistant"
+          }))
+        : []
+    };
+  } catch {
+    return {
+      messages: []
+    };
   }
 }
 

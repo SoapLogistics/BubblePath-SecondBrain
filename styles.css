@@ -106,6 +106,9 @@ button.secondary:hover,
 
 .detail-panel {
   border-width: 0 0 0 1px;
+  display: grid;
+  align-content: start;
+  gap: 18px;
 }
 
 .brand-row {
@@ -537,6 +540,90 @@ select {
   gap: 18px;
 }
 
+.server-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcf8;
+  padding: 14px;
+}
+
+.server-context-card {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 10px;
+}
+
+.server-context-card strong {
+  font-size: 13px;
+}
+
+.server-context-card span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.server-messages {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.server-message {
+  border-left: 3px solid var(--sky);
+  border-radius: 8px;
+  background: white;
+  padding: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.server-message.assistant {
+  border-left-color: var(--moss);
+  background: #f3f8f0;
+}
+
+.server-message.pending {
+  opacity: 0.72;
+}
+
+.server-message strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.server-message time {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.server-form {
+  display: grid;
+  gap: 10px;
+}
+
+.server-form textarea {
+  min-height: 96px;
+}
+
+.server-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
 .hidden {
   display: none;
 }
@@ -686,6 +773,10 @@ select {
   }
 
   .message-form {
+    grid-template-columns: 1fr;
+  }
+
+  .server-actions {
     grid-template-columns: 1fr;
   }
 }

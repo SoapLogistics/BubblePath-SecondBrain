@@ -7,6 +7,7 @@ Last updated: 2026-04-25
 - Noon checkpoint summary in `NOON_CHECKPOINT.md`
 - Browser prototype at `http://127.0.0.1:5173`
 - Browser prototype now also has a visible Browser Client status card, a more phone-friendly responsive layout, and a `package.json` with `start` / `start:network` scripts so it can move onto the Ubox more cleanly
+- Browser prototype now also has a first `Bubble Server` conversation lane with its own saved thread, selected-bubble context card, and shared GPT-backed chat surface so the page can start becoming the place we talk rather than only a capture/map tool
 - Local vault server in `server.js`
 - Disk vault folder at `bubblepath-vault/`
 - Latest data file at `bubblepath-vault/bubblepath-data.json`

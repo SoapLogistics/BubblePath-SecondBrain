@@ -121,6 +121,31 @@
       </section>
 
       <aside class="detail-panel" aria-label="Selected bubble">
+        <section class="server-panel" aria-label="Bubble Server conversation">
+          <div class="section-title">
+            <div>
+              <h2>Bubble Server</h2>
+              <p id="server-subtitle">A shared conversation surface for the future Ubox-first setup.</p>
+            </div>
+            <span id="server-count">0</span>
+          </div>
+
+          <div class="server-context-card">
+            <strong>Current context</strong>
+            <span id="server-context">No bubble is in focus yet. Pick one to let the conversation lean on it.</span>
+          </div>
+
+          <div id="server-messages" class="server-messages"></div>
+
+          <form id="server-form" class="server-form">
+            <textarea id="server-input" rows="4" placeholder="Talk to Bubble Server..."></textarea>
+            <div class="server-actions">
+              <button type="button" id="server-use-selected" class="secondary">Use Selected Bubble</button>
+              <button type="submit" id="server-send">Send</button>
+            </div>
+          </form>
+        </section>
+
         <div id="detail-empty" class="detail-empty">
           <span class="detail-symbol">O</span>
           <h2>No bubble selected</h2>

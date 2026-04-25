@@ -19,6 +19,7 @@ Last updated: 2026-04-25
   - a visible Browser Client status card so the page itself says where it is running and whether it is local-only or network-visible
   - a more phone-friendly responsive layout for the first browser-client pass
   - a `package.json` with `start` / `start:network` scripts, and `server.js` now respects `HOST`, so the browser client can move onto the Ubox more cleanly
+  - a first `Bubble Server` conversation lane with its own saved thread, selected-bubble context card, and GPT-backed browser chat surface so the page can start becoming the place we talk rather than only a capture/map tool
 - Native Mac BubblePath scaffold with:
   - a local launchable app bundle path at `dist/BubblePath.app`
   - a double-click launcher at `Launch BubblePath.command`
