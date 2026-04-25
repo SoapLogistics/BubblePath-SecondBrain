@@ -595,6 +595,27 @@ select {
   color: var(--pine);
 }
 
+.server-needs-you {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(216, 110, 91, 0.3);
+  border-radius: 8px;
+  background: #fff6f3;
+  padding: 10px;
+}
+
+.server-needs-you strong {
+  font-size: 13px;
+  color: var(--coral);
+}
+
+.server-needs-you span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .server-messages {
   display: grid;
   gap: 8px;
@@ -618,6 +639,11 @@ select {
 
 .server-message.pending {
   opacity: 0.72;
+}
+
+.server-message.needs-user {
+  border-left-color: var(--coral);
+  background: #fff6f3;
 }
 
 .server-message strong {

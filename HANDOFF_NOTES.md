@@ -24,6 +24,7 @@ Last updated: 2026-04-25
   - Bubble Server now also polls and rehydrates its server-backed thread when Soap Server is available, so the shared conversation can stay more in sync across multiple devices
   - Bubble Server now also shows an explicit live-sync status chip plus a manual refresh action, so the shared thread feels more trustworthy on phone and Mac instead of silently polling in the background
   - Bubble Server’s server-backed thread now carries a stable `updatedAt` timestamp from Soap Server itself, so client-side freshness no longer relies only on browser-local timing
+  - Bubble Server now also has a visible `Needs You` tray for server-thread messages marked as waiting on the user, so approvals and blockers have a clearer home in the client
 - Native Mac BubblePath scaffold with:
   - a local launchable app bundle path at `dist/BubblePath.app`
   - a double-click launcher at `Launch BubblePath.command`

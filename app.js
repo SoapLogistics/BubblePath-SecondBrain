@@ -124,6 +124,8 @@ const elements = {
   serverCount: document.querySelector("#server-count"),
   serverContext: document.querySelector("#server-context"),
   serverLiveChip: document.querySelector("#server-live-chip"),
+  serverNeedsYou: document.querySelector("#server-needs-you"),
+  serverNeedsYouText: document.querySelector("#server-needs-you-text"),
   serverMessages: document.querySelector("#server-messages"),
   serverForm: document.querySelector("#server-form"),
   serverInput: document.querySelector("#server-input"),
@@ -465,6 +467,8 @@ function render(options = {}) {
 function renderServerThread() {
   const bubble = getSelected();
   const messageCount = serverThread.messages.filter((message) => !message.pending).length;
+  const waitingMessages = serverThread.messages.filter((message) => message.needsUser);
+  const latestWaitingMessage = waitingMessages.at(-1) || null;
   elements.serverCount.textContent = serverThreadAvailable ? `${messageCount} live` : `${messageCount} local`;
   elements.serverSubtitle.textContent = bubble
     ? `Talk inside the world of the selected bubble, not outside it.${serverThreadAvailable ? ` This thread is now living on Soap Server${serverThreadSyncAt ? `, last synced ${formatTime(serverThreadSyncAt)}` : ""}.` : ""}`
@@ -481,11 +485,15 @@ function renderServerThread() {
       : "Soap Server live"
     : "Soap Server unavailable · browser fallback";
   elements.serverLiveChip.className = `server-live-chip${serverThreadAvailable ? " live" : ""}`;
+  elements.serverNeedsYou.classList.toggle("hidden", !latestWaitingMessage);
+  if (latestWaitingMessage) {
+    elements.serverNeedsYouText.textContent = shorten(latestWaitingMessage.text, 160);
+  }
 
   elements.serverMessages.innerHTML = "";
   serverThread.messages.forEach((message) => {
     const item = document.createElement("div");
-    item.className = `server-message ${message.role}${message.pending ? " pending" : ""}`;
+    item.className = `server-message ${message.role}${message.pending ? " pending" : ""}${message.needsUser ? " needs-user" : ""}`;
     item.innerHTML = `<strong>${message.role === "assistant" ? "Bubble Server" : "You"}</strong>${escapeHtml(message.text)}<time>${formatDate(message.createdAt)}</time>`;
     elements.serverMessages.append(item);
   });
