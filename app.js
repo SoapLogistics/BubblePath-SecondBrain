@@ -63,6 +63,7 @@ let serverThreadSyncAt = "";
 let serverThreadSyncTimer = null;
 let serverDraftSyncTimer = null;
 let notificationState = loadNotificationState();
+let accessInfo = null;
 let vaultInfo = {
   dataFile: "",
   backupFile: "",
@@ -189,6 +190,7 @@ syncMobileViewFromHash();
 primeNotificationState();
 render();
 loadVaultState();
+loadAccessInfo();
 registerServiceWorker();
 setInterval(() => {
   if (vaultAvailable && vaultDirty) saveVaultNow();
@@ -685,7 +687,9 @@ function renderClientSurface() {
   const isiPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const notificationSupported = "Notification" in window;
   const notificationPermission = notificationSupported ? Notification.permission : "unsupported";
-  const liveServerUrl = `http://192.168.4.78:5173`;
+  const liveServerUrl = accessInfo?.lanUrls?.[0] || `http://192.168.4.78:5173`;
+  const tailscaleUrl = accessInfo?.tailscale?.url || "";
+  const tailscaleName = accessInfo?.tailscale?.dnsName || "";
 
   elements.clientModeBanner.hidden = !isFilePreview;
   elements.clientModeActions.hidden = !isFilePreview;
@@ -698,11 +702,15 @@ function renderClientSurface() {
     ? "This file preview cannot reach Soap Server APIs, so Soap Bubbles falls back to local browser-only state here."
     : isLocalOnly
     ? "This run is local to this machine right now. Put the server on the Ubox to reach it from your phone too."
-    : `This run is network-visible at ${origin}, so your Mac and phone can use the same browser surface while the server stays up.`;
+    : tailscaleUrl
+      ? `This run is network-visible at ${origin}. Soap Server also knows a Tailscale path at ${tailscaleUrl}${tailscaleName ? ` (${tailscaleName})` : ""}.`
+      : `This run is network-visible at ${origin}, so your Mac and phone can use the same browser surface while the server stays up.`;
   elements.clientHome.textContent = isFilePreview
     ? `Use the live Soap Server page at ${liveServerUrl} when you want the real shared chat lane.`
     : isNetworkHost
-    ? "This page is already running from a shared host, which is the right shape for the future Ubox-first setup."
+    ? accessInfo?.lanUrls?.length
+      ? `This page is already running from a shared host. LAN path: ${accessInfo.lanUrls[0]}${tailscaleUrl ? ` · Tailscale path: ${tailscaleUrl}` : ""}`
+      : "This page is already running from a shared host, which is the right shape for the future Ubox-first setup."
     : "Next step: run this browser client on the Ubox with the network start mode so the page can become the shared front door.";
   elements.clientInstall.textContent = isStandalone
     ? "BubblePath is already running like an installed app on this device."
@@ -724,6 +732,19 @@ function renderClientSurface() {
     : notificationPermission === "denied"
       ? "Alerts Blocked"
       : "Turn On Alerts";
+}
+
+async function loadAccessInfo() {
+  try {
+    const response = await fetch("/api/access");
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!payload.ok || !payload.access) return;
+    accessInfo = payload.access;
+    render();
+  } catch {
+    // Keep the client card usable even if access introspection is unavailable.
+  }
 }
 
 function renderList() {

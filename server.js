@@ -1,5 +1,6 @@
 const http = require("node:http");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { execFileSync } = require("node:child_process");
@@ -49,6 +50,13 @@ const server = http.createServer(async (req, res) => {
           regular: backups.filter((entry) => !entry.isPreRestore).length,
           preRestore: backups.filter((entry) => entry.isPreRestore).length
         }
+      });
+    }
+
+    if (method === "GET" && url.pathname === "/api/access") {
+      return sendJson(res, 200, {
+        ok: true,
+        access: getAccessInfo()
       });
     }
 
@@ -116,6 +124,39 @@ function ensureVault() {
       ].join("\n")
     );
   }
+}
+
+function getAccessInfo() {
+  const interfaces = os.networkInterfaces();
+  const lanIps = Object.values(interfaces)
+    .flat()
+    .filter(Boolean)
+    .filter((entry) => entry.family === "IPv4" && !entry.internal)
+    .map((entry) => entry.address)
+    .filter((address, index, list) => list.indexOf(address) === index);
+
+  const access = {
+    host,
+    port,
+    lanIps,
+    lanUrls: lanIps.map((ip) => `http://${ip}:${port}`),
+    tailscale: {
+      dnsName: "",
+      ip: "",
+      url: ""
+    }
+  };
+
+  try {
+    const status = JSON.parse(execFileSync("tailscale", ["status", "--json"], { encoding: "utf8" }));
+    access.tailscale.dnsName = status.Self?.DNSName || "";
+    access.tailscale.ip = status.Self?.TailscaleIPs?.[0] || "";
+    access.tailscale.url = access.tailscale.ip ? `http://${access.tailscale.ip}:${port}` : "";
+  } catch {
+    // Tailscale is optional here; keep the endpoint useful even without it.
+  }
+
+  return access;
 }
 
 function readState(res) {
