@@ -337,6 +337,9 @@ Last updated: 2026-04-25
 - BubblePath’s GitHub repo is now cloned onto the Ubuntu helper box at `/srv/bubblepath/repos/bubblepath`, and the server now has `bubblepath-repo-status` / `bp-repo` to inspect that clone
 - The Toshiba USB drive on the Ubuntu helper box has now been reformatted as `ext4`, labeled `toshiba_server`, mounted persistently at `/srv/storage/toshiba`, and seeded with `BubblePath`, `Backups`, and `Archive` folders for larger server-side storage
 - The Ubuntu helper box now also has `bubblepath-toshiba-status` with a matching `bp-toshiba` alias, and `bubblepath-session-start` plus the server welcome note now include the Toshiba storage lane in the normal one-command server-home view
+- Bubble Server now has a first server-backed source-intake lane in the page itself, with PDF/EPUB/text/HTML upload plus URL fetch feeding a new Soap Server `/api/ingest-document` endpoint
+- The shared Bubble Server thread envelope now also stores ingested source documents and a selected-document pointer, so reading context can persist across phone and Mac instead of living in one browser tab
+- Soap Server now has `poppler-utils` and `pandoc` installed for real PDF/EPUB extraction, and the live endpoint has been verified with a real Ubuntu PDF plus a live Ubuntu documentation page
 - Native iPhone scaffold builds with `swift build`
 
 ## Important Files
@@ -354,11 +357,11 @@ Last updated: 2026-04-25
 
 ## Remaining High-Value Work
 
-1. Mac Safari/share-extension style capture for webpages and selected text
-2. iPhone Share Sheet ingestion using the shared capture payload model
-3. CloudKit/iCloud sync in the native app
-4. Decide long-term vault ownership between browser prototype and native app
-5. Optional age-based backup pruning in addition to count limits
-6. Better native GPT UX, such as streaming
+1. Bubble Server remote reachability away from home, with Tailscale-first access and then a cleaner HTTPS front door
+2. Push/notification plumbing so Soap Server can actually tap the user on the shoulder when it needs approval or input
+3. Stronger Bubble Server source-flow UX: clearer loading/errors, selected-source controls, and a better handoff from uploaded source into the conversation itself
+4. Mac Safari/share-extension style capture for webpages and selected text
+5. iPhone Share Sheet ingestion using the shared capture payload model
+6. Decide long-term vault ownership between browser prototype and native app
 7. Native app launch/run polish beyond `swift build`
 8. Future scene/mood layer planning so immersive themes like the undersea reef world can sit behind the bubbles without overpowering the thought space

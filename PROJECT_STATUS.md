@@ -425,15 +425,19 @@ The iPhone scaffold has:
 - The workspace now includes a saved-webarchive GPT response fixture, and the Mac utility panel exposes reveal/copy actions for it too
 - The validator and wrapper now both pass cleanly against the saved-webarchive fixture, and the Mac app still builds cleanly with the `.webarchive` path enabled
 - The Import sheet itself now explicitly surfaces `.webarchive` files too through a filename-extension UTType fallback, so the saved-webpage path is visible from the picker and not only supported deeper in the import stack
+- Bubble Server now has a first shared document-intake lane for PDFs, EPUBs, text files, HTML files, and fetched web pages, with Soap Server extracting readable text through `/api/ingest-document`
+- Bubble Server’s shared server-thread envelope now also carries ingested source documents plus a selected-source pointer, so uploaded reading context can travel across Mac and phone instead of staying stranded in one tab
+- Soap Server now has `poppler-utils` and `pandoc` installed so the browser client can actually extract text from uploaded PDFs and EPUBs instead of only pretending to support them
+- The new document-intake endpoint has been verified against a real Ubuntu PDF and a live Ubuntu documentation web page, and both returned extracted text successfully through the live Soap Server at `http://192.168.4.78:5173`
 
 The scaffold compiles with Apple Swift 6.1.2 after installing Xcode Command Line Tools.
 
 ## Next Useful Work
 
-1. Add Safari/share-extension style capture on Mac for webpages and selected text.
-2. Add iPhone Share Sheet ingestion using the shared capture payload model.
-3. Add CloudKit after local native save/load is solid.
-4. Decide whether backup retention should also prune by age, not only by count.
-5. Decide long-term vault ownership between the browser prototype and the native app.
-6. Consider native GPT streaming later; for now the Mac app has a visible thinking state and clearer GPT error display.
+1. Wire the Bubble Server document-intake lane all the way into the page UX with better loading/error feedback and a stronger “ask about this source” handoff from source list into chat.
+2. Make Bubble Server safely reachable away from home, likely through Tailscale first and then a cleaner HTTPS front door.
+3. Add notification paths so Soap Server can surface real blockers and approvals on phone, not just inside the web page.
+4. Add Safari/share-extension style capture on Mac for webpages and selected text.
+5. Add iPhone Share Sheet ingestion using the shared capture payload model.
+6. Decide long-term vault ownership between the browser prototype and the native app.
 7. Plan a future scene/mood layer behind the Mac canvas so themes like the undersea reef world can be added without fighting the core bubble interface.
